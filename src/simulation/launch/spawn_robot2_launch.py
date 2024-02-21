@@ -13,14 +13,16 @@
 # limitations under the License.
 
 import os
-
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-
+robot_name="robot2"
+robot_init=[1,1]
 def generate_launch_description():
     # Get the urdf file
     TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
@@ -33,34 +35,59 @@ def generate_launch_description():
     )
 
     # Launch configuration variables specific to simulation
-    x_pose = LaunchConfiguration('x_pose', default='1.0')
-    y_pose = LaunchConfiguration('y_pose', default='1.0')
+    x_pose = LaunchConfiguration('x_pose', default='0.0')
+    y_pose = LaunchConfiguration('y_pose', default='0.0')
 
     # Declare the launch arguments
     declare_x_position_cmd = DeclareLaunchArgument(
-        'x_pose', default_value='1.0',
+        'x_pose', default_value='0.0',
         description='Specify namespace of the robot')
 
     declare_y_position_cmd = DeclareLaunchArgument(
-        'y_pose', default_value='1.0',
+        'y_pose', default_value='0.0',
         description='Specify namespace of the robot')
+    
     remappings = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
-    namespace = [ '/' + "robot2" ]
+    namespace = [ '/' + robot_name]
     start_gazebo_ros_spawner_cmd = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
         arguments=[
-            '-entity', 'robot2',
+            '-entity', robot_name,
             '-file', urdf_path,
-            '-x', x_pose,
-            '-y', y_pose,
+            '-x', str(robot_init[0]),
+            '-y', str(robot_init[1]),
             '-z', '0.01',
             '-robot_namespace', namespace
         ],
         output='screen',
     )
 
+    urdf_file_name = 'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf'
+    urdf = os.path.join(
+        get_package_share_directory('turtlebot3_description'),
+        'urdf',
+        urdf_file_name)
+    
+
+    with open(urdf, 'r') as infp:
+        robot_desc = infp.read()
+
+    rsp_params = {'robot_description': robot_desc}
+    
+    node_robot_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[rsp_params, {'use_sim_time': True}],
+        remappings = [('/tf', 'tf1'), ('/tf_static', 'tf_static1')]
+
+    )
+
+
     ld = LaunchDescription()
+
+
 
     # Declare the launch options
     ld.add_action(declare_x_position_cmd)
@@ -68,5 +95,6 @@ def generate_launch_description():
 
     # Add any conditioned actions
     ld.add_action(start_gazebo_ros_spawner_cmd)
+    ld.add_action(node_robot_state_publisher)
 
     return ld

@@ -1,0 +1,1 @@
+export TURTLEBOT3_MODEL=burger
