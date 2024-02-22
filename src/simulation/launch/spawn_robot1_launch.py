@@ -25,15 +25,14 @@ robot_name="robot1"
 robot_init=[0,0]
 def generate_launch_description():
     # Get the urdf file
-    TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
-    model_folder = 'turtlebot3_' + TURTLEBOT3_MODEL
-    urdf_path = os.path.join(
-        get_package_share_directory('turtlebot3_gazebo'),
-        'models',
-        model_folder,
-        'model.sdf'
-    )
+    urdf_file_name = 'autogen/'+robot_name+'.urdf'
+    #urdf_file_name = 'model.urdf'
 
+    urdf = os.path.join(
+    get_package_share_directory('simulation'),
+    'models',
+    urdf_file_name)
+    
     # Launch configuration variables specific to simulation
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
@@ -53,7 +52,7 @@ def generate_launch_description():
         executable='spawn_entity.py',
         arguments=[
             '-entity', robot_name,
-            '-file', urdf_path,
+            '-file', urdf,
             '-x', str(robot_init[0]),
             '-y', str(robot_init[1]),
             '-z', '0.01',
@@ -62,12 +61,7 @@ def generate_launch_description():
         output='screen',
     )
 
-    urdf_file_name = 'autogen/robot.urdf'
-    urdf = os.path.join(
-        get_package_share_directory('simulation'),
-        'models',
-        urdf_file_name)
-    
+ 
 
     with open(urdf, 'r') as infp:
         robot_desc = infp.read()
@@ -79,7 +73,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         output='screen',
         parameters=[rsp_params, {'use_sim_time': True}],
-        #remappings = [('/tf', 'tf1'), ('/tf_static', 'tf_static1')]
+        remappings = [('/joint_states', '/'+robot_name+'/joint_states'),('/robot_description', '/'+robot_name+'/robot_description')]
 
     )
 
@@ -93,7 +87,7 @@ def generate_launch_description():
     ld.add_action(declare_y_position_cmd)
 
     # Add any conditioned actions
-    #ld.add_action(start_gazebo_ros_spawner_cmd)
+    ld.add_action(start_gazebo_ros_spawner_cmd)
     ld.add_action(node_robot_state_publisher)
 
     return ld

@@ -22,18 +22,17 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 robot_name="robot2"
-robot_init=[1,1]
+robot_init=[2,2]
 def generate_launch_description():
     # Get the urdf file
-    TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
-    model_folder = 'turtlebot3_' + TURTLEBOT3_MODEL
-    urdf_path = os.path.join(
-        get_package_share_directory('turtlebot3_gazebo'),
-        'models',
-        model_folder,
-        'model.sdf'
-    )
+    urdf_file_name = 'autogen/'+robot_name+'.urdf'
+    #urdf_file_name = 'model.urdf'
 
+    urdf = os.path.join(
+    get_package_share_directory('simulation'),
+    'models',
+    urdf_file_name)
+    
     # Launch configuration variables specific to simulation
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
@@ -47,14 +46,13 @@ def generate_launch_description():
         'y_pose', default_value='0.0',
         description='Specify namespace of the robot')
     
-    remappings = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
     namespace = [ '/' + robot_name]
     start_gazebo_ros_spawner_cmd = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
         arguments=[
             '-entity', robot_name,
-            '-file', urdf_path,
+            '-file', urdf,
             '-x', str(robot_init[0]),
             '-y', str(robot_init[1]),
             '-z', '0.01',
@@ -63,12 +61,7 @@ def generate_launch_description():
         output='screen',
     )
 
-    urdf_file_name = 'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf'
-    urdf = os.path.join(
-        get_package_share_directory('turtlebot3_description'),
-        'urdf',
-        urdf_file_name)
-    
+ 
 
     with open(urdf, 'r') as infp:
         robot_desc = infp.read()
@@ -80,7 +73,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         output='screen',
         parameters=[rsp_params, {'use_sim_time': True}],
-        remappings = [('/tf', 'tf1'), ('/tf_static', 'tf_static1')]
+        remappings = [('/joint_states', '/'+robot_name+'/joint_states'),('/robot_description', '/'+robot_name+'/robot_description')]
 
     )
 
