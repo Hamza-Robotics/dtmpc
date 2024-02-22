@@ -3,9 +3,9 @@
   <model name="turtlebot3_burger">
     <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
 
-    <link name="base_footprint"/>
+    <link name="robot2/base_footprint"/>
 
-    <link name="base_link">
+    <link name="robot2/base_link">
 
       <inertial>
         <pose>-0.032 0 0.070 0 0 0</pose>
@@ -20,7 +20,7 @@
         <mass>8.2573504e-01</mass>
       </inertial>
 
-      <collision name="base_collision">
+      <collision name="robot2/base_collision">
         <pose>-0.032 0 0.070 0 0 0</pose>
         <geometry>
           <box>
@@ -29,7 +29,7 @@
         </geometry>
       </collision>
 
-      <visual name="base_visual">
+      <visual name="robot2/base_visual">
         <pose>-0.032 0 0 0 0 0</pose>
         <geometry>
           <mesh>
@@ -40,7 +40,7 @@
       </visual>
     </link>
 
-    <link name="imu_link">
+    <link name="robot2/imu_link">
       <sensor name="tb3_imu" type="imu">
         <always_on>true</always_on>
         <update_rate>200</update_rate>
@@ -95,7 +95,7 @@
       </sensor>
     </link>
 
-    <link name="base_scan">
+    <link name="robot2/base_scan">
       <inertial>
         <pose>-0.020 0 0.161 0 0 0</pose>
         <inertia>
@@ -160,12 +160,12 @@
             <remapping>~/out:=scan</remapping>
           </ros>
           <output_type>sensor_msgs/LaserScan</output_type>
-          <frame_name>base_scan</frame_name>
+          <frame_name>robot2/base_scan</frame_name>
         </plugin>
       </sensor>
     </link>
 
-    <link name="wheel_left_link">
+    <link name="robot2/wheel_left_link">
 
       <inertial>
         <pose>0 0.08 0.023 -1.57 0 0</pose>
@@ -180,7 +180,7 @@
         <mass>2.8498940e-02</mass>
       </inertial>
 
-      <collision name="wheel_left_collision">
+      <collision name="robot2/wheel_left_collision">
         <pose>0 0.08 0.023 -1.57 0 0</pose>
         <geometry>
           <cylinder>
@@ -212,7 +212,7 @@
         </surface>
       </collision>
 
-      <visual name="wheel_left_visual">
+      <visual name="robot2/wheel_left_visual">
         <pose>0 0.08 0.023 0 0 0</pose>
         <geometry>
           <mesh>
@@ -223,7 +223,7 @@
       </visual>
     </link>
 
-    <link name="wheel_right_link">
+    <link name="robot2/wheel_right_link">
 
       <inertial>
         <pose>0.0 -0.08 0.023 -1.57 0 0</pose>
@@ -238,7 +238,7 @@
         <mass>2.8498940e-02</mass>
       </inertial>
 
-      <collision name="wheel_right_collision">
+      <collision name="robot2/wheel_right_collision">
         <pose>0.0 -0.08 0.023 -1.57 0 0</pose>
         <geometry>
           <cylinder>
@@ -270,7 +270,7 @@
         </surface>
       </collision>
 
-      <visual name="wheel_right_visual">
+      <visual name="robot2/wheel_right_visual">
         <pose>0.0 -0.08 0.023 0 0 0</pose>
         <geometry>
           <mesh>
@@ -281,7 +281,7 @@
       </visual>
     </link>
 
-    <link name='caster_back_link'>
+    <link name='robot2/caster_back_link'>
       <pose>-0.081 0 -0.004 -1.57 0 0</pose>
       <inertial>
         <mass>0.005</mass>
@@ -294,7 +294,7 @@
           <izz>0.001</izz>
         </inertia>
       </inertial>
-      <collision name='collision'>
+      <collision name='robot2/collision'>
         <geometry>
           <sphere>
             <radius>0.005000</radius>
@@ -315,47 +315,47 @@
       </collision>
     </link>
 
-    <joint name="base_joint" type="fixed">
-      <parent>base_footprint</parent>
-      <child>base_link</child>
+    <joint name="robot2/base_joint" type="fixed">
+      <parent>robot2/base_footprint</parent>
+      <child>robot2/base_link</child>
       <pose>0.0 0.0 0.010 0 0 0</pose>
     </joint>
 
-    <joint name="wheel_left_joint" type="revolute">
-      <parent>base_link</parent>
-      <child>wheel_left_link</child>
+    <joint name="robot2/wheel_left_joint" type="revolute">
+      <parent>robot2/base_link</parent>
+      <child>robot2/wheel_left_link</child>
       <pose>0.0 0.08 0.023 -1.57 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
       </axis>
     </joint>
 
-    <joint name="wheel_right_joint" type="revolute">
-      <parent>base_link</parent>
-      <child>wheel_right_link</child>
+    <joint name="robot2/wheel_right_joint" type="revolute">
+      <parent>robot2/base_link</parent>
+      <child>robot2/wheel_right_link</child>
       <pose>0.0 -0.08 0.023 -1.57 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
       </axis>
     </joint>
 
-    <joint name='caster_back_joint' type='ball'>
-      <parent>base_link</parent>
-      <child>caster_back_link</child>
+    <joint name='robot2/caster_back_joint' type='ball'>
+      <parent>robot2/base_link</parent>
+      <child>robot2/caster_back_link</child>
     </joint>
 
-    <joint name="imu_joint" type="fixed">
-      <parent>base_link</parent>
-      <child>imu_link</child>
+    <joint name="robot2/imu_joint" type="fixed">
+      <parent>robot2/base_link</parent>
+      <child>robot2/imu_link</child>
       <pose>-0.032 0 0.068 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
       </axis>
     </joint>
 
-    <joint name="lidar_joint" type="fixed">
-      <parent>base_link</parent>
-      <child>base_scan</child>
+    <joint name="robot2/lidar_joint" type="fixed">
+      <parent>robot2/base_link</parent>
+      <child>robot2/base_scan</child>
       <pose>-0.032 0 0.171 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
@@ -371,8 +371,8 @@
       <update_rate>30</update_rate>
 
       <!-- wheels -->
-      <left_joint>wheel_left_joint</left_joint>
-      <right_joint>wheel_right_joint</right_joint>
+      <left_joint>robot2/wheel_left_joint</left_joint>
+      <right_joint>robot2/wheel_right_joint</right_joint>
 
       <!-- kinematics -->
       <wheel_separation>0.160</wheel_separation>
@@ -389,9 +389,9 @@
       <publish_odom_tf>true</publish_odom_tf>
       <publish_wheel_tf>false</publish_wheel_tf>
 
-      <odometry_topic>odom</odometry_topic>
-      <odometry_frame>odom</odometry_frame>
-      <robot_base_frame>base_footprint</robot_base_frame>
+      <odometry_topic>robot2/odom</odometry_topic>
+      <odometry_frame>robot2/odom</odometry_frame>
+      <robot_base_frame>robot2/base_footprint</robot_base_frame>
 
     </plugin>
 
@@ -401,8 +401,8 @@
         <remapping>~/out:=joint_states</remapping>
       </ros>
       <update_rate>30</update_rate>
-      <joint_name>wheel_left_joint</joint_name>
-      <joint_name>wheel_right_joint</joint_name>
+      <joint_name>robot2/wheel_left_joint</joint_name>
+      <joint_name>robot2/wheel_right_joint</joint_name>
     </plugin>      
   </model>
 </sdf>

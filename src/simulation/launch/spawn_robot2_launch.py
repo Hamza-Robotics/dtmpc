@@ -9,7 +9,7 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
+# See the License foros2r the specific language governing permissions and
 # limitations under the License.
 
 import os
@@ -22,11 +22,16 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 robot_name="robot2"
-robot_init=[2,2]
+robot_init=[1,1]
 def generate_launch_description():
     # Get the urdf file
     urdf_file_name = 'autogen/'+robot_name+'.urdf'
     #urdf_file_name = 'model.urdf'
+    sdf_path = os.path.join(
+        get_package_share_directory('simulation'),
+        'models',
+        robot_name+'.sdf'
+    )
 
     urdf = os.path.join(
     get_package_share_directory('simulation'),
@@ -52,7 +57,7 @@ def generate_launch_description():
         executable='spawn_entity.py',
         arguments=[
             '-entity', robot_name,
-            '-file', urdf,
+            '-file', sdf_path,
             '-x', str(robot_init[0]),
             '-y', str(robot_init[1]),
             '-z', '0.01',
@@ -73,6 +78,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         output='screen',
         parameters=[rsp_params, {'use_sim_time': True}],
+        
         remappings = [('/joint_states', '/'+robot_name+'/joint_states'),('/robot_description', '/'+robot_name+'/robot_description')]
 
     )
