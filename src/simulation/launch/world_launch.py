@@ -21,7 +21,7 @@ def generate_launch_description():
   pkg_share = FindPackageShare(package='simulation').find('simulation')
 
   # Set the path to the world file
-  world_file_name = 'simple_world.world'
+  world_file_name = 'world.world'
   world_path = os.path.join(pkg_share, 'worlds', world_file_name)
 
   
