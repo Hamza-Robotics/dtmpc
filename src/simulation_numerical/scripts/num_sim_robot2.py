@@ -9,9 +9,9 @@ from tf2_ros import TransformBroadcaster, TransformStamped
 class StatePublisher(Node):
 
     def __init__(self):
-        self.robot_name="robot1"
-        self.x=0.0
-        self.y=0.00
+        self.robot_name="robot2"
+        self.x=1.0
+        self.y=1.00
         self.th0=0.0
         self.hz=20
         self.linear_x=0

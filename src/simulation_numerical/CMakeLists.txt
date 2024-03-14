@@ -35,6 +35,9 @@ install(DIRECTORY
 install(PROGRAMS
 
 scripts/num_sim_robot1.py
+scripts/num_sim_robot2.py
+scripts/num_sim_robot3.py
+
 DESTINATION lib/${PROJECT_NAME}
 )
 

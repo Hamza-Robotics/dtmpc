@@ -22,7 +22,6 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 robot_name="robot1"
-robot_init=[0,0]
 def generate_launch_description():
     urdf_file_name = 'autogen/'+robot_name+'.urdf'
     urdf = os.path.join(
@@ -43,8 +42,8 @@ def generate_launch_description():
     )
     simulation_num=Node(
         package='simulation_numerical',
-        executable='num_sim_robot1.py',
-        name='numsimrobot1',
+        executable='num_sim_'+robot_name+'.py',
+        name='numsim'+robot_name,
         output='screen')
 
 

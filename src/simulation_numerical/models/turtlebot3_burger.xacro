@@ -48,7 +48,7 @@
   <link name="map"/>
 
   <joint name="robot${ID}/base_joint" type="fixed">
-    <parent link="robot${ID}/base_footprint"/>
+    <parent link="map"/>
     <child link="robot${ID}/base_link"/>
     <origin xyz="0.0 0.0 0.010" rpy="0 0 0"/>
   </joint>
