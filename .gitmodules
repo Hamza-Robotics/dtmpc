@@ -1,0 +1,3 @@
+[submodule "src/mpc/acados"]
+	path = src/mpc/acados
+	url = https://github.com/acados/acados.git

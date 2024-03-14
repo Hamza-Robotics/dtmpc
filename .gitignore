@@ -2,3 +2,4 @@ build/
 install/
 log/
 .gitignore
+src/mpc/acados
