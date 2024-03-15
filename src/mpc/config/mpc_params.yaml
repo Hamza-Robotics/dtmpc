@@ -1,0 +1,78 @@
+#QP solver to be used in the NLP solver. String in  
+QP_solver: 'PARTIAL_CONDENSING_HPIPM'
+nlp_solver_type : 'SQP'
+cython_solver: False #[BOOL]
+obstacle:  True  #[BOOL]
+to_plotsystem: True
+print_acados_status: False
+
+#'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
+integrator_type: 'ERK'
+nlp_solver_max_iter: 4
+#cost_type: "SELF_DEF"¨
+cost_type: "LINEAR_LS"
+Update_Frequency: 1 #¤[Hz]
+Prediction_Frequency: 7 #[hz]
+Prediction_Length: 15 #[s]
+Number_obstacles: 20
+# Robot Constraints  VERY IMPORTANT
+safety_distance: 0.01 #[m]
+robot_radius: 0.4 #[m]
+trailer_radius: 0.4  #[m]
+trailer_base_to_hitch_joint: 0.6 #[m]   (L0b on schematic)
+trailer_baselength: 0.6 # [m] (L0 on schematic)
+trailer_link_len: 1.3  #[m]  (L1 on schematic)
+robot_width: 0.4 #  [m]   y
+robot_length: 0.4  #[m]   x
+## Trailer MatplotLib Plot 
+trailer_width: 0.4 #  [m]
+trailer_length: 0.4  #[m]
+robot_wheel_len: 0.4  #[m]      wheel length  (along the wheel direction (x))
+robot_wheel_width: 0.2  #[m]    Wheel width (y-axis)
+robot_wheel_forward: 0.2  #[m]   #How much forward the front wheels from the robot center. 
+
+trailer_wheel_len: 0.25  #[m]      wheel length  (along the wheel direction (x))
+trailer_wheel_width: 0.1  #[m]    Wheel width (y-axis)
+
+
+### ROBOT state constraints 
+velocity_max: 0.5 #  [m/s]
+velocity_min: -0.5 # [m/s]
+
+acceleration_max:  0.1 # [m/s²]
+acceleration_min: -0.1 # [m/s²]
+
+angle_max:  90. # Degrees
+angle_min: -90. # Degrees
+
+wheel_angle_max:  70. # Degrees
+wheel_angle_min: -70. # Degrees
+
+wheel_angle_velocity_max: 10. # Degrees
+wheel_angle_velocity_min: -10. # Degrees
+
+
+hitch_angle_on: False
+hitch_angle_max:  90 # Degrees
+hitch_angle_min: -90 # Degrees
+
+
+goal_eps: 0.1
+way_point_eps: 2.7
+## Parameters
+## Parameters
+L2_Norm: 1.e+1
+L1_Norm: 1.e+1
+
+#Q_matrix:  [1.e-6,1.e-6, 0,0,0]
+#Q_matrix_e:  [1.e-0,1.e-0, 0,0,0]
+#Q_matrix_waypoint: [1.e-5,1.e-5, 0,0,0]
+
+Q_matrix:  [1.e-6,1.e-6, 1.e-6]
+Q_matrix_e:  [1.e-0,1.e-0, 1.e-0]
+Q_matrix_waypoint: [1.e-1,1.e-1, 1.e-1]
+#This will mean that the Q matrix wil be factor times shooting nodes more important.
+#If Q_factor is too big then it will miss the waypoints.
+#if Q_factor is too small then it will h
+
+R_matrix:  [1.e-9,1.e-9]
