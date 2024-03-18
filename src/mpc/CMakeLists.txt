@@ -22,8 +22,9 @@ install(DIRECTORY
 
 install(PROGRAMS
 
-scripts/mpc_test.py
 scripts/mobile_robot_model.py
+scripts/mpc_controller_robot1.py
+scripts/model_predictive_control.py
 DESTINATION lib/${PROJECT_NAME}
 )
 

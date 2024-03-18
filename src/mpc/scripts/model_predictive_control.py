@@ -235,13 +235,63 @@ class  MPC():
     
         self.__solver = AcadosOcpSolver(self.__ocp, json_file=json_file)
         self.__integrator = AcadosSimSolver(self.__ocp, json_file=json_file)
-        if self.__cythonsolver==True:
+        #if self.__cythonsolver==True:
+        if False:
             AcadosOcpSolver.generate(self.__ocp, json_file='acados_ocp.json')
             AcadosOcpSolver.build(self.__ocp.code_export_directory, with_cython=True)
             self.__solver = AcadosOcpSolver.create_cython_solver('acados_ocp.json')
 
-print(MobileRobotModel().model.f_expl_expr)
+    def controller(self,x):
+
+        x_current = x[0]
+        self.__solver.set(0, 'lbx', x_current)
+        self.__solver.set(0, 'ubx', x_current)
+        if self.__print_status:
+            self.__solver.print_statistics()
+
+        status = self.__solver.solve()
+        if status != 0 :
+            print('acados acados_ocp_solver returned status {}. Exiting.'.format(status))
+            pass
+        self.solver_status=status
+
+        u_list=[]
+        x_list=[]
+        for i in range(self.__N):
+
+            u_list.append(self.__solver.get(i, 'u'))
+            x_list.append(self.__solver.get(i,'x'))
+        self.u_list=np.asarray(u_list)
+        self.x_list=np.asarray(x_list)
+        for i in range(len(self.x_list)):
+            self.__solver.set(i, 'x', x_list[i])
+            self.__solver.set(i, 'u', u_list[i])
+            pass
+        return self.u_list, 0
+    
+    def set_controller_trajectory(self,traj,index):
+
+        Q=self.__Q
+        for i in range(self.__N):
+            self.__solver.set(i, 'yref', np.concatenate((traj[i, :], np.zeros(2))))               
+            self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
+            Q = Q + (i / len(traj)) * (self.__Q_e - Q)
+        self.__solver.cost_set(self.__N, 'W', Q)
+        self.__solver.set(self.__N, 'yref', traj[-1,:])        
+        Q_matrix_waypoint =  np.diag(self.__Q_matrix_waypoint) # [x,y,x_d,y_d,th,th_d]
+
+        if len(index)>0:
+            if index[0]==self.__N:
+                self.__solver.cost_set(self.__N, 'W', Q_matrix_waypoint)
+            else:
+                self.__solver.cost_set(index[0], 'W', scipy.linalg.block_diag(Q_matrix_waypoint, self.__R))
+
+    def simulator(self,x,u):
+        self.__integrator.set('x', x)
+        self.__integrator.set('u', u)
+        self.__integrator.solve()
+        xcurrent=self.__integrator.get('x')
+        return xcurrent.reshape(1,-1)
+    
 
 
-
-MPC()

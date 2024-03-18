@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray, MultiArrayDimension
@@ -8,9 +7,8 @@ class ArrayPublisher(Node):
     def __init__(self):
         super().__init__('dtmpc_waypoint')
         self.publisher_ = self.create_publisher(Float64MultiArray, 'dtmpc/waypoint/robot1', 10)
-        self.timer = self.create_timer(1.0, self.timer_callback)
 
-    def timer_callback(self):
+    def send_waypoints(self):
         # Example nx3 array
         nx3_array = np.array([[1.0, 1.0, 0.0],
                               [4.0, 5.0, 0.0],
@@ -28,8 +26,8 @@ class ArrayPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
     array_publisher = ArrayPublisher()
-    rclpy.spin(array_publisher)
-    array_publisher.destroy_node()
+    array_publisher.send_waypoints()
+    rclpy.spin_once(array_publisher)  # Spin once to publish the message
     rclpy.shutdown()
 
 if __name__ == '__main__':

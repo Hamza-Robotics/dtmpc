@@ -51,8 +51,11 @@ class trajectory_genertor():
             raise Exception("Error: Way point,waypoint, set is not set or is empty. Set way points for the trajectory.")
 
         if len(self.waypoint)>1:
+            print(np.shape(self.waypoint))
+            print(np.shape(x0))
             if np.linalg.norm(self.waypoint[0,:2]-x0[0,:2])<self.waypoint_eps:
                 self.waypoint = self.waypoint[1:]
+                print("NIGGA")
                 pass
         if len(self.waypoint)==1:
             if np.linalg.norm(self.waypoint[0,:2]-x0[0,:2])<self.goal_eps:

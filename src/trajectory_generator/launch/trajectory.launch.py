@@ -28,36 +28,26 @@ def generate_launch_description():
     pkg_path = os.path.join(get_package_share_directory(package_name))
 
 
-    robot1 = IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource([os.path.join(
-                        get_package_share_directory(package_name),'launch','sim_robot1.launch.py'
-                    )])
-        )
-    robot2 = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory(package_name),'launch','sim_robot2.launch.py'
-                )])
-    )
-
-    robot3 = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory(package_name),'launch','sim_robot3.launch.py'
-                )])
-    )
-
 
     rvizfile=os.path.join(pkg_path,'config','rvizconfig.rviz')
 
-    node_rviz2= Node(
-        package='rviz2',
-        executable='rviz2'
-    )
+
+    waypointsender= Node(
+        package='trajectory_generator',
+        executable='waypointsender.py',
+        name='waypoint_onde')
+
+    trajectory= Node(
+        package='trajectory_generator',
+        executable='trajectory.py',
+        name='trajectory_node')
+
+
   
     
     
     return LaunchDescription([
-        robot1,
-        robot2,
-        robot3,
-        node_rviz2
+        trajectory,
+        waypointsender
+  
     ])

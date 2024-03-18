@@ -11,12 +11,14 @@ from geometry_msgs.msg import PoseStamped
 class ArraySubscriber(Node):
     def __init__(self):
         super().__init__('trajectory_generator')
-        self.subscription = self.create_subscription(Float64MultiArray,'dtmpc/waypoint/robot1',self.waypoint_callback,10)
+        self.subscription_waypoint = self.create_subscription(Float64MultiArray,'dtmpc/waypoint/robot1',self.waypoint_callback,10)
+        self.subscription_state = self.create_subscription(PoseStamped,'robot1/pose',self.state_callback,10)
+
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.waypoints=[[190000091,0,0],[0,0,0]]
+        self.waypoints = np.array([[0.001,0.001,0],[0.001,0.001,0],[0.003,0.003,0]]).reshape(-1, 3)
         self.publisher_feasbile = self.create_publisher(Path, 'dtmpc/robot1/trajectory_feasbile', 10)
         self.publisher_full = self.create_publisher(Path, 'dtmpc/robot1/trajectory_full', 10)
-
+        self.x=np.array([[0,0,0]])
     def convert_to_path_stamped(self,traj):
         path=Path()
         for i in range(len(traj)):
@@ -34,13 +36,12 @@ class ArraySubscriber(Node):
         path.header.frame_id="map"
         path.header.stamp=self.get_clock().now().to_msg()
         return path
+    
     def timer_callback(self):
         if self.waypoints[0][0] != 190000091:
             gen=trajectory_genertor(max_v=1,prediction_Length=10,frequency=10,nodes=100)
             gen.waypoint=(self.waypoints)
-            x0 =       np.array([[0, 0,0]])
-            print(self.waypoints)
-            path,path_feasible,index=gen.trajectory(x0)
+            path,path_feasible,index=gen.trajectory(self.x)
 
             path_msg=self.convert_to_path_stamped(path)
             path_feasbile_msg=self.convert_to_path_stamped(path_feasible)
@@ -50,7 +51,8 @@ class ArraySubscriber(Node):
         data = msg.data
         self.waypoints = np.array(data).reshape(-1, 3)
         
-
+    def state_callback(self, msg):
+        self.x=np.array([[msg.pose.position.x,msg.pose.position.y,0]])
 
 def main(args=None):
     rclpy.init(args=args)
