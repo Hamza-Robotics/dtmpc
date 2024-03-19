@@ -3,9 +3,9 @@ from math import sin, cos, pi
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
-from geometry_msgs.msg import Quaternion, Twist, PoseStamped
+from geometry_msgs.msg import Quaternion, Twist
 from sensor_msgs.msg import JointState
-from tf2_ros import TransformBroadcaster, TransformStamped
+from tf2_ros import TransformBroadcaster, PoseStamped, TransformStamped
 
 class StatePublisher(Node):
 
@@ -36,10 +36,12 @@ class StatePublisher(Node):
 
 
         # message declarations
-        self.odom_trans = PoseStamped()
-        self.odom_trans.header.frame_id = 'map'
+        self.pose = PoseStamped()
+        self.pose.header.frame_id = 'map'
         self.joint_state = JointState()
-
+        self.rviz_pose = TransformStamped()
+        self.rviz_pose.header.frame_id = 'map'
+        self.rviz_pose.child_frame_id = self.robot_name+'/base_link'
     def integrator(self, msg):
         linear = msg.linear
         angular = msg.angular
@@ -58,16 +60,25 @@ class StatePublisher(Node):
         self.joint_state.name = [self.robot_name+'/wheel_right_joint', self.robot_name+'/wheel_left_joint']
         self.joint_state.position = [0.0,0.0]
         # (moving in a circle with radius=2)
-        self.odom_trans.header.stamp = now.to_msg()
-        self.odom_trans.pose.position.x=self.x
-        self.odom_trans.pose.position.y=self.y
-        self.odom_trans.pose.position.z=self.x
-        self.odom_trans.pose.orientation = \
+        self.pose.header.stamp = now.to_msg()
+        self.pose.pose.position.x = self.x
+        self.pose.pose.position.y = self.y
+        self.pose.pose.position.z = 0.0
+        self.pose.pose.orientation= \
             euler_to_quaternion(0, 0, self.th0) # roll,pitch,yaw
+        
+
+        self.rviz_pose.transform.translation.x = self.x
+        self.rviz_pose.transform.translation.y = self.y
+        self.rviz_pose.transform.translation.z = 0.0
+        self.rviz_pose.transform.rotation = \
+            euler_to_quaternion(0, 0, self.th0) # roll,pitch,yaw
+
 
         # send the joint state and transform
         self.joint_pub.publish(self.joint_state)
-        self.publish_state.publish(self.odom_trans)
+        self.publish_state.publish(self.pose)
+        self.broadcaster.sendTransform(self.rviz_pose)
 
 
 

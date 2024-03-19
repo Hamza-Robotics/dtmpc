@@ -50,14 +50,15 @@ def generate_launch_description():
 
     node_rviz2= Node(
         package='rviz2',
-        executable='rviz2'
+        executable='rviz2',
+        arguments=['-d', rvizfile]
     )
   
     
     
     return LaunchDescription([
         robot1,
-        robot2,
-        robot3,
+        #robot2,
+        #robot3,
         node_rviz2
     ])
