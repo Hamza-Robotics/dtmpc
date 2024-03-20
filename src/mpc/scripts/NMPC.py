@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from acados_template import AcadosOcp, AcadosOcpSolver, AcadosSimSolver
+from acados_template import AcadosOcp, AcadosOcpSolver, AcadosSimSolver, AcadosModel
 import casadi as ca
 from mobile_robot_model import MobileRobotModel
 import yaml
@@ -16,23 +16,24 @@ class  NMPC():
         self.frequency=yamlfile['Prediction_Frequency']
         self.__prediction_length = yamlfile['Prediction_Length']
         self.update_frequency=yamlfile['Update_Frequency']
-        self.__robot_model=MobileRobotModel()
+        self.__robot_model=self.__define_model()
+
 
         self.__Tf = self.__prediction_length
         self.__N=int(self.__prediction_length*self.frequency)
         self.N=int(self.__prediction_length*self.frequency)
         self.numberofobs=yamlfile['Number_obstacles']
         self.cost_map=0.0
-        self.__model=self.__robot_model.model # Model
+        self.__model=self.__robot_model # Model
         self.__ocp = AcadosOcp()
         self.__ocp.model = self.__model #Define Model
-        self.__mconstraint=self.__robot_model.model
+
         # Initialize Parameters.
         self.__n_params = self.__model.p.size()[0]
-        self.max_v=self.__robot_model.constraint.v_max
-        self.min_v=self.__robot_model.constraint.v_min
-        self.max_th_d=self.__robot_model.constraint.th_d_max
-        self.min_th_d=self.__robot_model.constraint.th_d_min
+        self.max_v=yamlfile['velocity_max']
+        self.min_v=yamlfile['velocity_min']
+        self.max_th_d=np.deg2rad(yamlfile['wheel_angle_velocity_max'])
+        self.min_th_d=np.deg2rad(yamlfile['wheel_angle_velocity_min'])
         self.prediction_length=self.__prediction_length
         self.__ocp.dims.np = self.__n_params
         self.__ocp.parameter_values = np.zeros(self.__n_params)
@@ -62,6 +63,41 @@ class  NMPC():
         self.__constraints()
         self.__solver_compiler()
     
+    def __define_model(self):
+        model=AcadosModel()
+        # control inputs
+        v = ca.SX.sym('v')
+        th_d = ca.SX.sym('th_d')
+        controls = ca.vertcat(v, th_d)
+        # n_controls = controls.size()[0]
+        # model states
+        x = ca.SX.sym('x')
+        y = ca.SX.sym('y')
+        th = ca.SX.sym('th')
+
+        states = ca.vertcat(x, 
+                            y, 
+                            th)
+        
+
+        kin_eq = [(v)*ca.cos(th), 
+               (v)*ca.sin(th),
+               th_d 
+                ]   
+        f = ca.Function('f', [states, controls], [ca.vcat(kin_eq)], ['state', 'control_input'], ['kin_eq'])
+        # acados model
+        x_dot = ca.SX.sym('x_dot', len(kin_eq))
+        f_impl = x_dot - f(states, controls)
+
+        model.f_expl_expr = f(states, controls)
+        model.f_impl_expr = f_impl
+        model.x = states
+        model.xdot = x_dot
+        model.u = controls
+        p = ca.vertcat([])
+        model.p=p
+        model.name = 'mobile_robot'
+        return model
     def __linear_cost_function(self):
         
         # cost type
