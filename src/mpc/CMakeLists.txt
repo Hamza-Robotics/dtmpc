@@ -24,7 +24,8 @@ install(PROGRAMS
 
 scripts/mobile_robot_model.py
 scripts/mpc_controller_robot1.py
-scripts/model_predictive_control.py
+scripts/NMPC.py
+scripts/conversion_functions.py
 DESTINATION lib/${PROJECT_NAME}
 )
 

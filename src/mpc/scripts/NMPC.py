@@ -7,7 +7,8 @@ import numpy as np
 import scipy
 import os
 
-class  MPC():
+class  NMPC():
+
     def __init__(self):
         with open('src/mpc/config/mpc_params.yaml') as file:
             yamlfile = yaml.safe_load(file)
@@ -19,6 +20,7 @@ class  MPC():
 
         self.__Tf = self.__prediction_length
         self.__N=int(self.__prediction_length*self.frequency)
+        self.N=int(self.__prediction_length*self.frequency)
         self.numberofobs=yamlfile['Number_obstacles']
         self.cost_map=0.0
         self.__model=self.__robot_model.model # Model
@@ -267,7 +269,7 @@ class  MPC():
             self.__solver.set(i, 'x', x_list[i])
             self.__solver.set(i, 'u', u_list[i])
             pass
-        return self.u_list, 0
+        return self.u_list, self.x_list
     
     def set_controller_trajectory(self,traj,index):
 
@@ -279,12 +281,12 @@ class  MPC():
         self.__solver.cost_set(self.__N, 'W', Q)
         self.__solver.set(self.__N, 'yref', traj[-1,:])        
         Q_matrix_waypoint =  np.diag(self.__Q_matrix_waypoint) # [x,y,x_d,y_d,th,th_d]
-
-        if len(index)>0:
-            if index[0]==self.__N:
-                self.__solver.cost_set(self.__N, 'W', Q_matrix_waypoint)
-            else:
-                self.__solver.cost_set(index[0], 'W', scipy.linalg.block_diag(Q_matrix_waypoint, self.__R))
+        if index != None:
+            if len(index)>0:
+                if index[0]==self.__N:
+                    self.__solver.cost_set(self.__N, 'W', Q_matrix_waypoint)
+                else:
+                    self.__solver.cost_set(index[0], 'W', scipy.linalg.block_diag(Q_matrix_waypoint, self.__R))
 
     def simulator(self,x,u):
         self.__integrator.set('x', x)

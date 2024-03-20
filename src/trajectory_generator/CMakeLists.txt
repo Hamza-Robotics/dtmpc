@@ -25,6 +25,7 @@ scripts/traj_gen.py
 scripts/psedo_state.py
 scripts/waypointsender.py
 scripts/trajectory.py
+scripts/conversion_functions.py
 DESTINATION lib/${PROJECT_NAME}
 )
 

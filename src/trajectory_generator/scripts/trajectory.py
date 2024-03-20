@@ -9,14 +9,19 @@ from traj_gen import trajectory_genertor
 import matplotlib.pyplot as plt
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
-
+import yaml
+from conversion_functions import euler_to_quaternion
 class ArraySubscriber(Node):
     def __init__(self):
         super().__init__('trajectory_generator')
         self.subscription_waypoint = self.create_subscription(Float64MultiArray,'dtmpc/waypoint/robot1',self.waypoint_callback,10)
         self.subscription_state = self.create_subscription(PoseStamped,'robot1/pose',self.state_callback,10)
-        
-        self.gen=trajectory_genertor(max_v=1,prediction_Length=10,frequency=10,nodes=100)
+        with open('src/mpc/config/mpc_params.yaml') as file:
+            yamlfile = yaml.safe_load(file)
+        self.frequency=yamlfile['Prediction_Frequency']
+        self.max_v=yamlfile['velocity_max']
+        self.prediction_Length=yamlfile['Prediction_Length']
+        self.gen=trajectory_genertor(self.max_v,self.prediction_Length,self.frequency)
         self.waypoints = np.array([[0.001,0.001,0],[0.001,0.001,0],[0.003,0.003,0]]).reshape(-1, 3)
         self.gen.waypoint=(self.waypoints)
 
@@ -66,12 +71,6 @@ def main(args=None):
     array_subscriber.destroy_node()
     rclpy.shutdown()
 
-def euler_to_quaternion(roll, pitch, yaw):
-    qx = sin(roll/2) * cos(pitch/2) * cos(yaw/2) - cos(roll/2) * sin(pitch/2) * sin(yaw/2)
-    qy = cos(roll/2) * sin(pitch/2) * cos(yaw/2) + sin(roll/2) * cos(pitch/2) * sin(yaw/2)
-    qz = cos(roll/2) * cos(pitch/2) * sin(yaw/2) - sin(roll/2) * sin(pitch/2) * cos(yaw/2)
-    qw = cos(roll/2) * cos(pitch/2) * cos(yaw/2) + sin(roll/2) * sin(pitch/2) * sin(yaw/2)
-    return Quaternion(x=qx, y=qy, z=qz, w=qw)
 
 if __name__ == '__main__':
     main()

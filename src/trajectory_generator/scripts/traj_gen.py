@@ -23,7 +23,7 @@ class trajectory_genertor():
     - goal_eps (float): Epsilon value for goal proximity check.
     - goal_reached (bool): Flag indicating whether the goal has been reached.
     """
-    def __init__(self,max_v,prediction_Length,frequency,nodes) -> None:
+    def __init__(self,max_v,prediction_Length,frequency) -> None:
         self.waypoint=[]
         self.max_v=max_v*0.9
         self.time_sample=1/frequency
@@ -31,7 +31,7 @@ class trajectory_genertor():
         self.waypoint_eps=1.9
         self.goal_eps=0.1
         self.goal_reached=False
-        self.N=nodes
+        self.N=int(prediction_Length*frequency)
 
     def trajectory(self,x0):
         """

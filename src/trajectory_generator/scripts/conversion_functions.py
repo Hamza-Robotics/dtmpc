@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+#20/3 14:40
 from math import cos, sin, atan2, asin
 from geometry_msgs.msg import Quaternion
 from nav_msgs.msg import Path
@@ -41,7 +41,9 @@ def convert_to_path_stamped(self,traj):
 path=Path()
 len(path.poses)
 def convert_to_numpy(path):
-len(path.poses)
+    len(path.poses)
+    numpy_traj = np.zeros((len(path.poses), 3))
+    traj=path.poses
     for i in range(len(traj)):
         numpy_traj[i, 0] = traj[i].pose.position.x
         numpy_traj[i, 1] = traj[i].pose.position.y
