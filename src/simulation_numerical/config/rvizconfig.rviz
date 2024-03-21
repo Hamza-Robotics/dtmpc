@@ -123,7 +123,7 @@ Visualization Manager:
       Mass Properties:
         Inertia: false
         Mass: false
-      Name: RobotModel
+      Name: Robot1
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -138,7 +138,7 @@ Visualization Manager:
       Length: 0.30000001192092896
       Line Style: Lines
       Line Width: 0.029999999329447746
-      Name: Trajectory Path1
+      Name: Traj robot 1
       Offset:
         X: 0
         Y: 0
@@ -155,6 +155,34 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /dtmpc/robot1/trajectory_full
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: MPC robot1
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dtmpc/robot1/mpc/solution
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
@@ -174,39 +202,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        map:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot2/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot2/base_scan:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot2/caster_back_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot2/imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot2/wheel_left_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot2/wheel_right_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Mass Properties:
         Inertia: false
         Mass: false
@@ -233,39 +228,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        map:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot3/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot3/base_scan:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot3/caster_back_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot3/imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot3/wheel_left_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot3/wheel_right_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Mass Properties:
         Inertia: false
         Mass: false
@@ -320,25 +282,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.438746213912964
+      Distance: 21.428041458129883
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.448946952819824
-        Y: -1.2210620641708374
-        Z: 2.2917122840881348
+        X: 7.988382816314697
+        Y: -3.831592559814453
+        Z: -6.330493450164795
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5297969579696655
+      Pitch: 0.5002026557922363
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 6.015425682067871
+      Yaw: 0.2522461712360382
     Saved: ~
 Window Geometry:
   Displays:
@@ -358,5 +320,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1387
-  X: 301
-  Y: 114
+  X: 300
+  Y: 113

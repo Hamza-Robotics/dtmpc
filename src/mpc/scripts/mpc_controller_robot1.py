@@ -5,7 +5,7 @@ import numpy as np
 from rclpy.node import Node
 from nav_msgs.msg import Path
 from std_msgs.msg import String
-from NMPC import NMPC
+from TNMPC import TNMPC as NMPC
 from conversion_functions import path2numpy, quaternion_to_euler, numpy2path
 from geometry_msgs.msg import PoseStamped, Twist
 
