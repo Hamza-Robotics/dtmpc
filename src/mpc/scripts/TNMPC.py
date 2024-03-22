@@ -41,7 +41,7 @@ class  TNMPC():
 
         # Vehicle parameters
         self.__nlp_solver_type=yamlfile['nlp_solver_type']
-        zeros_states = 7  # Number of zeros to add
+        zeros_states = 0  # Number of zeros to add
         self.__Q_matrix_e = [0] * zeros_states + yamlfile['Q_matrix_e']
         self.__Q_matrix = [0] * zeros_states + yamlfile['Q_matrix']
         self.__Q_matrix_waypoint = [0] * zeros_states + yamlfile['Q_matrix_waypoint']
@@ -65,75 +65,83 @@ class  TNMPC():
         self.__solver_compiler()
     
     def __define_model(self):
+
         model=AcadosModel()
-        # control inputs
-##
-##
-# Define symbolic variables
+        ####
+        # Define symbolic variables
         v = ca.SX.sym('v')
         th_d = ca.SX.sym('th_d')
 
-        # Define symbolic variables
+        # Define parameters variables
+        # State parameters
         x = ca.SX.sym('x')
         y = ca.SX.sym('y')
         th = ca.SX.sym('th')
+        # Desired state parameters
         x_d = ca.SX.sym('x_d')
         y_d = ca.SX.sym('y_d')
-        # Desired velocity
+        # Desired velocity parameters
         xdot_d = ca.SX.sym('xdot_d')
         ydot_d = ca.SX.sym('ydot_d')
+
+
         # Define error statements. 
         e_x=x-x_d
         e_y=y-y_d
-        e_d=ca.sqrt(e_x**2+e_y**2)
-        e_o=(e_y*ca.cos(th))/e_d-(e_x*ca.sin(th))/e_d
+
         e_d = ca.SX.sym('e_d')
         e_o = ca.SX.sym('e_o')
+
         # Define matrix using symbolic variables
 
         # Concatenate symbolic variables into a vector
         controls = ca.vertcat(v, th_d)
-        states = ca.vertcat(x, 
-                            y, 
-                            th,
+        states = ca.vertcat(
+                        e_d,
+                        e_o)
 
-                            x_d,
-                            y_d,
-                            
-                            xdot_d,
-                            ydot_d,
-                            e_d,
-                            e_o)
+        paremeters = ca.vertcat(x, 
+                        y, 
+                        th,
 
-        m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/e_d
+                        x_d,
+                        y_d,
+                        
+                        xdot_d,
+                        ydot_d,)    
+        eps=0.1
+        m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)**2
         m12 = 0
-        m21 = ((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/e_d**2
-        m22 = (e_x*ca.cos(th)+e_y*ca.sin(th))/e_d
+        m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d+eps)**2
+        m22 = -((e_x/(e_d+eps))*ca.cos(th)+(e_y/(e_d+eps)**2)*ca.sin(th))
 
+        J = ca.vertcat(ca.horzcat(m11,m12),ca.horzcat(m21,m22))
         # Concatenate matrices into a single matrix
-        J = ca.vertcat(ca.horzcat(m11, m12), 
-                            ca.horzcat(m21, m22))
-        e1 = -(e_x*xdot_d+e_y*ydot_d)/e_d
-        e2 = (e_o*(xdot_d*e_x+ydot_d*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/e_d**2
+        #J = ca.vertcat(ca.horzcat(m11, m12), ca.horzcat(m21, m22))
+        e1 = -(e_x*xdot_d+e_y*ydot_d)/(e_d+eps)
+        e2 = (e_o*(xdot_d*e_x+ydot_d*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/(e_d+eps)**2
 
         # Calculate the result
 
         E=ca.vertcat(e1, e2)
-        kin_eq = [([1]*(9-2)),ca.mtimes(J, controls) + E]
-        ###
-        f = ca.Function('f', [states, controls], [ca.vcat(kin_eq)], ['state', 'control_input'], ['kin_eq'])
-        # acados model
-        x_dot = ca.SX.sym('x_dot', len(kin_eq))
-        f_impl = x_dot - f(states, controls)
+        kin_eq = [ca.mtimes(J, controls)]
 
-        model.f_expl_expr = f(states, controls)
+        ##
+
+        f = ca.Function('f', [states,paremeters, controls], [ca.vcat(kin_eq)], ['state','paremeters', 'control_input'], ['kin_eq'])
+        x_dot = ca.SX.sym('x_dot', len(kin_eq))
+        f_impl = x_dot - f(states,paremeters, controls)
+
+        model.f_expl_expr = f(states,paremeters, controls)
         model.f_impl_expr = f_impl
         model.x = states
         model.xdot = x_dot
         model.u = controls
-        p = ca.vertcat([])
-        model.p=p
+        model.p=paremeters
         model.name = 'mobile_robot'
+
+
+####    
         return model
     
     def __linear_cost_function(self):
@@ -183,9 +191,9 @@ class  TNMPC():
         self.__ns_e=0
         self.__ns_0=0
         self.__ns_i=0
-        x_alg=self.__model.x[0]
-        y_alg=self.__model.x[1]
-        th_alg=self.__model.x[2]
+        #x_alg=self.__model.x[0]
+        #y_alg=self.__model.x[1]
+        #th_alg=self.__model.x[2]
         self.__ocp.constraints.lbu = np.array([self.min_v, (self.min_th_d)])
         self.__ocp.constraints.ubu = np.array([self.max_v, (self.max_th_d)])
         self.__ocp.constraints.idxbu = np.array([0, 1])
@@ -317,19 +325,51 @@ class  TNMPC():
             AcadosOcpSolver.build(self.__ocp.code_export_directory, with_cython=True)
             self.__solver = AcadosOcpSolver.create_cython_solver('acados_ocp.json')
 
-    def controller(self,x):
+    def e_de_o(self,x,xd,y,yd,th):
+        e_x=x-xd
+        e_y=y-yd
+        e_d=np.sqrt(e_x**2+e_y**2)
+        e_o=(e_y*np.cos(th))/e_d-(e_x*np.sin(th))/e_d
+        return e_d,e_o
+    
 
+    def controller(self,x,traj):
         x_current = x[0]
-        x_current = np.array([x_current[0], x_current[1], x_current[2],x_current[0], x_current[1], 0.4, 0.4, 0, 0])
-        self.__solver.set(0, 'lbx', x_current)
-        self.__solver.set(0, 'ubx', x_current)
+        x=x_current[0] 
+        y=x_current[1] 
+        th=x_current[2]
+        eps=0.0001
+        e_d,e_o=self.e_de_o(x,traj[0,0],y,traj[0,1],th)
+
+
+        state = np.array([e_d+eps,e_o+eps])
+        self.__solver.set(0, 'lbx', state)
+        self.__solver.set(0, 'ubx', state)
+  
+        params=np.array([x, y, th, traj[0,0], traj[0,1], 0,0])
+        self.__solver.set(0, 'p', params)
+        
+        Q=self.__Q
+        for i in range(self.__N):
+            
+            self.__solver.set(i, 'yref', np.concatenate((np.array([0,0]), np.zeros(2))))               
+            self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
+            Q = Q + (i / len(traj)) * (self.__Q_e - Q)
+            params=np.array([x, y, th, traj[i,0], traj[i,1], 1,1])
+            self.__solver.set(i, 'p', params)
+        
+        
+        self.__solver.cost_set(self.__N, 'W', Q)
+        params=np.array([x, y, th, traj[self.__N-1,0], traj[self.__N-1,1], 0,0])
+        self.__solver.set(i, 'p', params)
+        self.__solver.set(self.__N, 'yref',np.array([0,0]))        
         if self.__print_status:
             self.__solver.print_statistics()
-
         status = self.__solver.solve()
         if status != 0 :
             print('acados acados_ocp_solver returned status {}. Exiting.'.format(status))
             pass
+        self.solver_status=status        
         self.solver_status=status
 
         u_list=[]
@@ -344,27 +384,9 @@ class  TNMPC():
             self.__solver.set(i, 'x', x_list[i])
             self.__solver.set(i, 'u', u_list[i])
             pass
+        print(self.x_list)
         return self.u_list, self.x_list
     
-    def set_controller_trajectory(self,traj,x,index):
-
-        Q=self.__Q
-        for i in range(self.__N):
-            x_current = x[0]
-            current_traj=np.array([x_current[0], x_current[1], x_current[2],traj[i,0], traj[i,1], 0.4, 0.4, 0, 0])
-            self.__solver.set(i, 'yref', np.concatenate((current_traj, np.zeros(2))))               
-            self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
-            Q = Q + (i / len(traj)) * (self.__Q_e - Q)
-        self.__solver.cost_set(self.__N, 'W', Q)
-        self.__solver.set(self.__N, 'yref', current_traj=np.array([x_current[0], x_current[1], x_current[2],traj[-1,0], traj[-1,1], 0.0, 0.0, 0, 0]))        
-        Q_matrix_waypoint =  np.diag(self.__Q_matrix_waypoint) # [x,y,x_d,y_d,th,th_d]
-        if index != None:
-            if len(index)>0:
-                if index[0]==self.__N:
-                    self.__solver.cost_set(self.__N, 'W', Q_matrix_waypoint)
-                else:
-                    self.__solver.cost_set(index[0], 'W', scipy.linalg.block_diag(Q_matrix_waypoint, self.__R))
-
     def simulator(self,x,u):
         self.__integrator.set('x', x)
         self.__integrator.set('u', u)

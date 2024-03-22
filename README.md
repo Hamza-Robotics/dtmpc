@@ -24,13 +24,20 @@
 
 ## Usage
 ```bash
-colcon build && source install/setup.bash && ros2 launch simulation_numerical numerical_simulation_launch.py 
+colcon build
+source install/setup.bash
+source setup_acados.sh 
+ros2 launch simulation_numerical numerical_simulation_launch.py 
 ```
 ```bash
-colcon build && source install/setup.bash && ros2 launch trajectory_generator trajectory.launch.py 
+colcon build
+source install/setup.bash
+ros2 launch trajectory_generator trajectory.launch.py 
 ```
 
-
+```bash
+ros2 topic pub /send_waypoints std_msgs/Bool "data: true"
+```
 ## Contributing
 
 

@@ -2,9 +2,9 @@
 QP_solver: 'PARTIAL_CONDENSING_HPIPM'
 nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
-obstacle:  True  #[BOOL]
+obstacle:  False  #[BOOL]
 to_plotsystem: True
-print_acados_status: False
+print_acados_status: True
 
 #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
 integrator_type: 'ERK'
