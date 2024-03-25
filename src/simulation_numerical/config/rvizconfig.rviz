@@ -138,7 +138,7 @@ Visualization Manager:
       Length: 0.30000001192092896
       Line Style: Lines
       Line Width: 0.029999999329447746
-      Name: Traj robot 1
+      Name: R1 Path
       Offset:
         X: 0
         Y: 0
@@ -154,7 +154,22 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /dtmpc/robot1/trajectory_full
+        Value: /trajectory/viz
+      Value: true
+    - Alpha: 1
+      Class: rviz_default_plugins/PointStamped
+      Color: 204; 41; 204
+      Enabled: true
+      History Length: 1
+      Name: R1 point tracked
+      Radius: 0.20000000298023224
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /trajectory/point
       Value: true
     - Alpha: 1
       Buffer Length: 1
@@ -183,6 +198,34 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /dtmpc/robot1/mpc/solution
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Billboards
+      Line Width: 0.10000000149011612
+      Name: R1 Solution
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dtmpc/robot1/solution
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
@@ -282,25 +325,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 21.428041458129883
+      Distance: 7.356314659118652
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 7.988382816314697
-        Y: -3.831592559814453
-        Z: -6.330493450164795
+        X: -6.359518051147461
+        Y: -4.22125768661499
+        Z: 5.239442348480225
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5002026557922363
+      Pitch: 0.36979734897613525
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.2522461712360382
+      Yaw: 3.6172683238983154
     Saved: ~
 Window Geometry:
   Displays:
@@ -320,5 +363,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1387
-  X: 300
-  Y: 113
+  X: 163
+  Y: 27

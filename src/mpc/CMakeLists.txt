@@ -27,6 +27,8 @@ scripts/mpc_controller_robot1.py
 scripts/NMPC.py
 scripts/TNMPC.py
 scripts/conversion_functions.py
+scripts/solution_plotter.py
+
 DESTINATION lib/${PROJECT_NAME}
 )
 

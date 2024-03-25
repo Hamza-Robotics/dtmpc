@@ -2,11 +2,11 @@ import casadi as ca
 import numpy as np
 
 from acados_template import AcadosOcp, AcadosOcpSolver, AcadosSimSolver, AcadosModel
-model=AcadosModel()
 
-model=AcadosModel()
+
 ####
 # Define symbolic variables
+model=AcadosModel()
 v = ca.SX.sym('v')
 th_d = ca.SX.sym('th_d')
 
@@ -78,14 +78,3 @@ model.u = controls
 model.p=paremeters
 model.name = 'mobile_robot'
 
-
-# Evaluate with real values
-states_val = np.array([0, 0])
-paremeters_val = np.array([1.0, 2.0, 0.5, 0.3, 0.4, 0.6, 0.7])
-controls_val = np.array([0.8, 0.9])
-x_dot_val = f(states_val, paremeters_val, controls_val)
-print(x_dot_val)
-
-
-
-####    

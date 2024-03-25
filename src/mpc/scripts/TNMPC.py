@@ -109,13 +109,14 @@ class  TNMPC():
                         
                         xdot_d,
                         ydot_d,)    
-        eps=0.1
+        eps=0.01
         m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)**2
         m12 = 0
         m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d+eps)**2
         m22 = -((e_x/(e_d+eps))*ca.cos(th)+(e_y/(e_d+eps)**2)*ca.sin(th))
 
-        J = ca.vertcat(ca.horzcat(m11,m12),ca.horzcat(m21,m22))
+        J = ca.vertcat(ca.horzcat(m11,m12),
+                       ca.horzcat(m21,m22))
         # Concatenate matrices into a single matrix
         #J = ca.vertcat(ca.horzcat(m11, m12), ca.horzcat(m21, m22))
         e1 = -(e_x*xdot_d+e_y*ydot_d)/(e_d+eps)
@@ -124,7 +125,7 @@ class  TNMPC():
         # Calculate the result
 
         E=ca.vertcat(e1, e2)
-        kin_eq = [ca.mtimes(J, controls)]
+        kin_eq = [ca.mtimes(J, controls)+E]
 
         ##
 
@@ -182,10 +183,6 @@ class  TNMPC():
         self.__ocp.cost.yref = np.zeros((self.__ny,))
         self.__ocp.cost.yref_e = np.zeros((self.__ny_e,))
     
-
-        print(np.shape(self.__ocp.cost.Vx_0))
-        print(np.shape(self.__ocp.cost.Vu_0))
-        print(self.__ocp.cost.W_0.shape[0])
 
     def __constraints(self):
         self.__ns_e=0
@@ -330,23 +327,22 @@ class  TNMPC():
         e_y=y-yd
         e_d=np.sqrt(e_x**2+e_y**2)
         e_o=(e_y*np.cos(th))/e_d-(e_x*np.sin(th))/e_d
-        return e_d,e_o
-    
+        return e_d,e_o   
 
-    def controller(self,x,traj):
+    def controller(self,x,traj,velocities):
         x_current = x[0]
         x=x_current[0] 
         y=x_current[1] 
         th=x_current[2]
-        eps=0.0001
+
         e_d,e_o=self.e_de_o(x,traj[0,0],y,traj[0,1],th)
 
 
-        state = np.array([e_d+eps,e_o+eps])
+        state = np.array([e_d,e_o])
         self.__solver.set(0, 'lbx', state)
         self.__solver.set(0, 'ubx', state)
   
-        params=np.array([x, y, th, traj[0,0], traj[0,1], 0,0])
+        params=np.array([x, y, th, traj[0,0], traj[0,1], velocities[0,0],velocities[0,1]])
         self.__solver.set(0, 'p', params)
         
         Q=self.__Q
@@ -355,12 +351,12 @@ class  TNMPC():
             self.__solver.set(i, 'yref', np.concatenate((np.array([0,0]), np.zeros(2))))               
             self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
             Q = Q + (i / len(traj)) * (self.__Q_e - Q)
-            params=np.array([x, y, th, traj[i,0], traj[i,1], 1,1])
+            params=np.array([x, y, th, traj[i,0], traj[i,1], velocities[i,0],velocities[i,1]])
             self.__solver.set(i, 'p', params)
         
         
         self.__solver.cost_set(self.__N, 'W', Q)
-        params=np.array([x, y, th, traj[self.__N-1,0], traj[self.__N-1,1], 0,0])
+        params=np.array([x, y, th, traj[self.__N-1,0], traj[self.__N-1,1], velocities[self.__N-1,0],velocities[self.__N-1,1]])
         self.__solver.set(i, 'p', params)
         self.__solver.set(self.__N, 'yref',np.array([0,0]))        
         if self.__print_status:
@@ -384,7 +380,6 @@ class  TNMPC():
             self.__solver.set(i, 'x', x_list[i])
             self.__solver.set(i, 'u', u_list[i])
             pass
-        print(self.x_list)
         return self.u_list, self.x_list
     
     def simulator(self,x,u):

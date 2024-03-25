@@ -26,7 +26,6 @@
 ```bash
 colcon build
 source install/setup.bash
-source setup_acados.sh 
 ros2 launch simulation_numerical numerical_simulation_launch.py 
 ```
 ```bash
@@ -38,6 +37,14 @@ ros2 launch trajectory_generator trajectory.launch.py
 ```bash
 ros2 topic pub /send_waypoints std_msgs/Bool "data: true"
 ```
+
+
+```bash
+colcon build && source install/setup.bash && source setup_acados.sh  && ros2 run mpc mpc_controller_robot1.py
+```
+
+
+
 ## Contributing
 
 
