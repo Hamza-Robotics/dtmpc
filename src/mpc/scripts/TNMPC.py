@@ -32,8 +32,8 @@ class  TNMPC():
         self.__n_params = self.__model.p.size()[0]
         self.max_v=yamlfile['velocity_max']
         self.min_v=yamlfile['velocity_min']
-        self.max_th_d=np.deg2rad(yamlfile['wheel_angle_velocity_max'])
-        self.min_th_d=np.deg2rad(yamlfile['wheel_angle_velocity_min'])
+        self.max_th_d=np.deg2rad(yamlfile['angle_velocity_max'])
+        self.min_th_d=np.deg2rad(yamlfile['angle_velocity_min'])
         self.prediction_length=self.__prediction_length
         self.__ocp.dims.np = self.__n_params
         self.__ocp.parameter_values = np.zeros(self.__n_params)
@@ -109,7 +109,7 @@ class  TNMPC():
                         
                         xdot_d,
                         ydot_d,)    
-        eps=0.05
+        eps=1
         m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)**2
         m12 = 0
         m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d+eps)**2
@@ -119,8 +119,8 @@ class  TNMPC():
                        ca.horzcat(m21,m22))
         # Concatenate matrices into a single matrix
         #J = ca.vertcat(ca.horzcat(m11, m12), ca.horzcat(m21, m22))
-        e1 = -(e_x*xdot_d+e_y*ydot_d)/(e_d+eps)
-        e2 = (e_o*(xdot_d*e_x+ydot_d*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/(e_d+eps)**2
+        e1 = -((e_x*xdot_d+e_y*ydot_d)/(e_d+eps))
+        e2 = (e_o*(xdot_d*e_x+ydot_d*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/(e_d**2+eps)
 
         # Calculate the result
 
@@ -197,7 +197,7 @@ class  TNMPC():
         self.__ocp.constraints.usbu = np.zeros(2)
         self.__ocp.constraints.idxsbu = np.array([0, 1])
 
-        cons_ep=1e-5
+        cons_ep=0.1
         self.__ocp.constraints.lbx_0 = np.array([cons_ep])
         self.__ocp.constraints.ubx_0 = np.array([1000])
         self.__ocp.constraints.idxbx_0 = np.array([0])    
@@ -351,7 +351,7 @@ class  TNMPC():
     def e_de_o(self,x,xd,y,yd,th):
         e_x=x-xd
         e_y=y-yd
-        e_d=np.sqrt(e_x**2+e_y**2)+0.0001
+        e_d=np.sqrt(e_x**2+e_y**2)
         e_o=(e_y*np.cos(th))/e_d-(e_x*np.sin(th))/e_d
         return e_d,e_o   
 
@@ -370,11 +370,11 @@ class  TNMPC():
   
         params=np.array([x, y, th, traj[0,0], traj[0,1], velocities[0,0],velocities[0,1]])
         self.__solver.set(0, 'p', params)
-        
+   
         Q=self.__Q
         for i in range(self.__N):
             
-            self.__solver.set(i, 'yref', np.concatenate((np.array([0,0]), np.zeros(2))))               
+            self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.1]), np.zeros(2))))               
             self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
             Q = Q + (i / len(traj)) * (self.__Q_e - Q)
             params=np.array([x, y, th, traj[i,0], traj[i,1], velocities[i,0],velocities[i,1]])
@@ -384,7 +384,7 @@ class  TNMPC():
         self.__solver.cost_set(self.__N, 'W', Q)
         params=np.array([x, y, th, traj[self.__N-1,0], traj[self.__N-1,1], velocities[self.__N-1,0],velocities[self.__N-1,1]])
         self.__solver.set(i, 'p', params)
-        self.__solver.set(self.__N, 'yref',np.array([0,0]))        
+        self.__solver.set(self.__N, 'yref',np.array([0.1,0.1]))        
         if self.__print_status:
             self.__solver.print_statistics()
         status = self.__solver.solve()
