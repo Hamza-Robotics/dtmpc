@@ -6,7 +6,7 @@ from rclpy.qos import QoSProfile
 from geometry_msgs.msg import Quaternion, Twist
 from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster, PoseStamped, TransformStamped
-
+import yaml
 class StatePublisher(Node):
 
     def __init__(self):
@@ -14,10 +14,12 @@ class StatePublisher(Node):
         self.x=0.0
         self.y=0.00
         self.th0=0.0
-        self.hz=20
         self.linear_x=0
         self.angular_z=0
 
+        with open('src/mpc/config/dnmpc_params.yaml') as file:
+            yamlfile = yaml.safe_load(file)
+        self.hz=yamlfile['Prediction_Frequency']
 
         super().__init__(self.robot_name+'_statepublisher')
 

@@ -109,7 +109,7 @@ class  TNMPC():
                         
                         xdot_d,
                         ydot_d,)    
-        eps=0.01
+        eps=0.05
         m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)**2
         m12 = 0
         m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d+eps)**2
@@ -183,7 +183,6 @@ class  TNMPC():
         self.__ocp.cost.yref = np.zeros((self.__ny,))
         self.__ocp.cost.yref_e = np.zeros((self.__ny_e,))
     
-
     def __constraints(self):
         self.__ns_e=0
         self.__ns_0=0
@@ -197,9 +196,34 @@ class  TNMPC():
         self.__ocp.constraints.lsbu = np.zeros(2)
         self.__ocp.constraints.usbu = np.zeros(2)
         self.__ocp.constraints.idxsbu = np.array([0, 1])
-        self.__ns_i+=2
-        self.__ns_0+=2
 
+        cons_ep=1e-5
+        self.__ocp.constraints.lbx_0 = np.array([cons_ep])
+        self.__ocp.constraints.ubx_0 = np.array([1000])
+        self.__ocp.constraints.idxbx_0 = np.array([0])    
+        self.__ocp.constraints.lsbx_0 = np.zeros(1)   
+        self.__ocp.constraints.usbx_0 = np.zeros(1)
+        self.__ocp.constraints.idxsbx_0 = np.array([0]) 
+
+        self.__ocp.constraints.lbx = np.array([cons_ep])
+        self.__ocp.constraints.ubx = np.array([1000])
+        self.__ocp.constraints.idxbx = np.array([0])    
+        self.__ocp.constraints.lsbx = np.zeros(1)   
+        self.__ocp.constraints.usbx = np.zeros(1)
+        self.__ocp.constraints.idxsbx = np.array([0])        
+        
+        self.__ocp.constraints.lbx_e = np.array([cons_ep])
+        self.__ocp.constraints.ubx_e = np.array([1000])
+        self.__ocp.constraints.idxbx_e = np.array([0])    
+        self.__ocp.constraints.lsbx_e = np.zeros(1)   
+        self.__ocp.constraints.usbx_e = np.zeros(1)
+        self.__ocp.constraints.idxsbx_e = np.array([0])
+
+
+        
+        self.__ns_i+=3
+        self.__ns_0+=2
+        self.__ns_e+=1
 
 
 
@@ -304,7 +328,9 @@ class  TNMPC():
         self.__ocp.constraints.x0 = x_ref
         self.__ocp.cost.yref = np.concatenate((x_ref, u_ref))
         self.__ocp.cost.yref_e = x_ref
+        self.__ocp.solver_options.levenberg_marquardt = 1e-5
         #self.__ocp.solver_options.reg_epsilon='CONVEXIFY'
+        
         self.__ocp.solver_options.qp_solver = self.__QP_solver
         self.__ocp.solver_options.nlp_solver_type = self.__nlp_solver_type
         self.__ocp.solver_options.tf = self.__Tf
@@ -325,7 +351,7 @@ class  TNMPC():
     def e_de_o(self,x,xd,y,yd,th):
         e_x=x-xd
         e_y=y-yd
-        e_d=np.sqrt(e_x**2+e_y**2)
+        e_d=np.sqrt(e_x**2+e_y**2)+0.0001
         e_o=(e_y*np.cos(th))/e_d-(e_x*np.sin(th))/e_d
         return e_d,e_o   
 
@@ -377,8 +403,8 @@ class  TNMPC():
         self.u_list=np.asarray(u_list)
         self.x_list=np.asarray(x_list)
         for i in range(len(self.x_list)):
-            self.__solver.set(i, 'x', x_list[i])
-            self.__solver.set(i, 'u', u_list[i])
+            #self.__solver.set(i, 'x', x_list[i])
+            #self.__solver.set(i, 'u', u_list[i])
             pass
         return self.u_list, self.x_list
     

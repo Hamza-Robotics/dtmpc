@@ -17,7 +17,7 @@ class Mpc_Controller(Node):
         self.publisher_ = self.create_publisher(String, 'topic', 10)
         self.MPC = NMPC()
         self.timer = self.create_timer(1/10, self.control_loop)
-        self.timer2 = self.create_timer(1/10, self.plot)
+        #self.timer2 = self.create_timer(1, self.plot)
         self.subscription_state = self.create_subscription(PoseStamped,'robot1/pose',self.state_callback,10)
         self.publisher_solutionx = self.create_publisher(Path, 'dtmpc/robot1/mpc/solution', 10)
         self.publisher_twist = self.create_publisher(Twist, 'robot1/cmd_vel', 10)
@@ -85,7 +85,7 @@ class Mpc_Controller(Node):
                 Twist_msg=Twist()
                 Twist_msg.linear.x=u[0,0]
                 Twist_msg.angular.z=u[0,1]
-                #self.publisher_twist.publish(Twist_msg)
+                self.publisher_twist.publish(Twist_msg)
     def trajectory_callback(self,msg):
         t=Trajectory() 
         msg.velocities

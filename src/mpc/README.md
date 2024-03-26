@@ -35,10 +35,21 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$acados_dir/lib"
 export ACADOS_SOURCE_DIR="$acados_dir"
 cd ~/dtmpc/
 ```
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/hamza/dtmpc/src/mpc/acados/lib
+#### Error codes for NLP solver:
+0. ACADOS_SUCCESS,
+1. ACADOS_FAILURE,
+2. ACADOS_MAXITER,
+3. ACADOS_MINSTEP,
+4. ACADOS_QP_FAILURE,
+5. ACADOS_READY,
 
-/home/hamza/dtmpc/src/mpc/acados/lib
+#### Error codes for QP Solver:
+0. SUCCESS, // found solution satisfying accuracy tolerance
+1. MAX_ITER, // maximum iteration number reached
+2. MIN_STEP, // minimum step length reached
+3. NAN_SOL, // NaN in solution detected
+4. INCONS_EQ, // unconsistent equality constraints
 
 
-export LD_LIBRARY_PATH="src/mpc/acados"
-export ACADOS_SOURCE_DIR="src/mpc/acados"
+
+

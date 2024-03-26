@@ -20,7 +20,7 @@ class MinimalPublisher(Node):
         self.publisher_path = self.create_publisher(Path, 'trajectory/viz', 10)
         self.publisher_trajectory = self.create_publisher(Trajectory, 'trajectory/profile', 10)
 
-        with open('src/mpc/config/mpc_params.yaml') as file:
+        with open('src/mpc/config/dnmpc_params.yaml') as file:
             yamlfile = yaml.safe_load(file)
         frequency=yamlfile['Prediction_Frequency']
         prediction_Length=yamlfile['Prediction_Length']
@@ -48,8 +48,8 @@ class MinimalPublisher(Node):
             point_msg.pose.position.y=y
 
             vel=Vector3()
-            vel.x=3*(np.pi/25)*np.cos(np.pi*(t+i*self.samplingtime))
-            vel.y=-3*(np.pi/25)*np.sin(np.pi*(t+i*self.samplingtime))
+            vel.x=3*(np.pi/25)*np.cos(np.pi*(t+i*self.samplingtime)/25)
+            vel.y=-3*(np.pi/25)*np.sin(np.pi*(t+i*self.samplingtime)/25)
             velocities.append(vel)
 
             path.poses.append(point_msg)

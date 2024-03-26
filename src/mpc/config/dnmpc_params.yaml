@@ -4,16 +4,16 @@ nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
 obstacle:  False  #[BOOL]
 to_plotsystem: True
-print_acados_status: False
+print_acados_status: True
 
 #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
 integrator_type: 'ERK'
-nlp_solver_max_iter: 20
+nlp_solver_max_iter: 50
 #cost_type: "SELF_DEF"¨
 cost_type: "LINEAR_LS"
 Update_Frequency: 1 #¤[Hz]
-Prediction_Frequency: 7 #[hz]
-Prediction_Length: 15 #[s]
+Prediction_Frequency: 10 #[hz]
+Prediction_Length: 5 #[s]
 Number_obstacles: 20
 # Robot Constraints  VERY IMPORTANT
 safety_distance: 0.01 #[m]
@@ -36,8 +36,8 @@ trailer_wheel_width: 0.1  #[m]    Wheel width (y-axis)
 
 
 ### ROBOT state constraints 
-velocity_max: 1.5 #  [m/s]
-velocity_min: -1.5 # [m/s]
+velocity_max: 0.5 #  [m/s]
+velocity_min: -0.5 # [m/s]
 
 acceleration_max:  0.1 # [m/s²]
 acceleration_min: -0.1 # [m/s²]
@@ -68,8 +68,8 @@ L1_Norm: 1.e+3
 #Q_matrix_e:  [1.e-0,1.e-0, 0,0,0]
 #Q_matrix_waypoint: [1.e-5,1.e-5, 0,0,0]
 
-Q_matrix:          [1.e-1, 1.e-1]
-Q_matrix_e:        [1.e-1, 1.e-1]
+Q_matrix:          [1.e+2, 1.e+2]
+Q_matrix_e:        [1.e-7, 1.e-7]
 Q_matrix_waypoint: [1.e-8, 1.e-8]
 #This will mean that the Q matrix wil be factor times shooting nodes more important.
 #If Q_factor is too big then it will miss the waypoints.

@@ -42,12 +42,15 @@ def generate_launch_description():
         executable='trajectory.py',
         name='trajectory_node')
 
-
+    trajectory= Node(
+        package='trajectory_generator',
+        executable='circular_path.py',
+        name='circularnode')
   
     
     
     return LaunchDescription([
         trajectory,
-        waypointsender
+        #waypointsender
   
     ])
