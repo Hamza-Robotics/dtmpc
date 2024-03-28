@@ -98,10 +98,11 @@ class MinimalSubscriber(Node):
         for i in range(len(path_data)):
             v=path_data[i,0]
             thd=path_data[i,1]
+            th0=th0+self.samplingtime*thd
             x=x+self.samplingtime*v*np.cos(th0)
             y=y+self.samplingtime*v*np.sin(th0)
-            th0=th0+self.samplingtime*thd
-            print(x,y)
+            
+            print(v,thd)
             path_solution.poses.append(self.prograpation(x,y))
 
 

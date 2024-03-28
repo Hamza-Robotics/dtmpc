@@ -33,7 +33,9 @@ class MinimalPublisher(Node):
         point_msg.header.stamp = self.get_clock().now().to_msg()
         point_msg.header.frame_id = 'map'
         point_msg.point.x = x
-        point_msg.point.y = y
+        point_msg.point.y = y        
+        point_msg.point.x = 2.0
+        point_msg.point.y = 2.0
         self.publisher_.publish(point_msg)
         path=Path()
         path.header.stamp = self.get_clock().now().to_msg() 
@@ -48,8 +50,15 @@ class MinimalPublisher(Node):
             point_msg.pose.position.y=y
 
             vel=Vector3()
-            vel.x=3*(np.pi/25)*np.cos(np.pi*(t+i*self.samplingtime)/25)
-            vel.y=-3*(np.pi/25)*np.sin(np.pi*(t+i*self.samplingtime)/25)
+            vel.x= 3*np.cos(np.pi*(t+i*self.samplingtime)/25)*np.pi/25
+            vel.y=-3*np.sin(np.pi*(t+i*self.samplingtime)/25)*np.pi/25            
+            point_msg.pose.position.x=2.0
+            point_msg.pose.position.y=2.0
+
+            vel=Vector3()
+            vel.x= 0.0
+            vel.y= 0.0
+            
             velocities.append(vel)
 
             path.poses.append(point_msg)

@@ -16,6 +16,7 @@ class  TNMPC():
         self.frequency=yamlfile['Prediction_Frequency']
         self.__prediction_length = yamlfile['Prediction_Length']
         self.update_frequency=yamlfile['Update_Frequency']
+        self.nlp_solver_tol_stat=yamlfile['nlp_solver_tol_stat']
         self.__robot_model=self.__define_model()
 
 
@@ -197,39 +198,39 @@ class  TNMPC():
         self.__ocp.constraints.usbu = np.zeros(2)
         self.__ocp.constraints.idxsbu = np.array([0, 1])
 
-        cons_ep=0.1
-        self.__ocp.constraints.lbx_0 = np.array([cons_ep])
-        self.__ocp.constraints.ubx_0 = np.array([1000])
-        self.__ocp.constraints.idxbx_0 = np.array([0])    
-        self.__ocp.constraints.lsbx_0 = np.zeros(1)   
-        self.__ocp.constraints.usbx_0 = np.zeros(1)
-        self.__ocp.constraints.idxsbx_0 = np.array([0]) 
+        cons_ep=0.001
 
-        self.__ocp.constraints.lbx = np.array([cons_ep])
-        self.__ocp.constraints.ubx = np.array([1000])
-        self.__ocp.constraints.idxbx = np.array([0])    
-        self.__ocp.constraints.lsbx = np.zeros(1)   
-        self.__ocp.constraints.usbx = np.zeros(1)
-        self.__ocp.constraints.idxsbx = np.array([0])        
-        
-        self.__ocp.constraints.lbx_e = np.array([cons_ep])
-        self.__ocp.constraints.ubx_e = np.array([1000])
-        self.__ocp.constraints.idxbx_e = np.array([0])    
-        self.__ocp.constraints.lsbx_e = np.zeros(1)   
-        self.__ocp.constraints.usbx_e = np.zeros(1)
-        self.__ocp.constraints.idxsbx_e = np.array([0])
 
 
         
-        self.__ns_i+=3
+        self.__ns_i+=2
         self.__ns_0+=2
-        self.__ns_e+=1
+        self.__ns_e+=0
 
 
+        ed_max=5.0
+        ed_min=0.001
+        eo_max=0.1
+        eo_min=-0.1
 
+        self.__ocp.constraints.lbx_e = np.array([ed_min,eo_min])
+        self.__ocp.constraints.ubx_e = np.array([ed_max,eo_max])
+        self.__ocp.constraints.idxbx_e = np.array([0,1])    
+        self.__ocp.constraints.lsbx_e = np.zeros(2)   
+        self.__ocp.constraints.usbx_e = np.zeros(2)
+        self.__ocp.constraints.idxsbx_e = np.array([0,1]) 
 
+        
+        self.__ocp.constraints.lbx = np.array([ed_min,eo_min])
+        self.__ocp.constraints.ubx = np.array([ed_max,eo_max])
+        self.__ocp.constraints.idxbx = np.array([0,1])    
+        self.__ocp.constraints.lsbx = np.zeros(2)   
+        self.__ocp.constraints.usbx = np.zeros(2)
+        self.__ocp.constraints.idxsbx = np.array([0,1]) 
 
-
+        self.__ns_i+=2
+        ##self.__ns_0+=2
+        self.__ns_e+=2
 
         if self.__obstacle:
 
@@ -328,16 +329,17 @@ class  TNMPC():
         self.__ocp.constraints.x0 = x_ref
         self.__ocp.cost.yref = np.concatenate((x_ref, u_ref))
         self.__ocp.cost.yref_e = x_ref
-        self.__ocp.solver_options.levenberg_marquardt = 1e-5
+        #self.__ocp.solver_options.levenberg_marquardt = 1e-5
         #self.__ocp.solver_options.reg_epsilon='CONVEXIFY'
-        
+        #self.__ocp.solver_options.nlp_solver_tol_comp = 1e-13
         self.__ocp.solver_options.qp_solver = self.__QP_solver
+        self.__ocp.solver_options.qp_solver_tol_stat = 1e-10
         self.__ocp.solver_options.nlp_solver_type = self.__nlp_solver_type
         self.__ocp.solver_options.tf = self.__Tf
         self.__ocp.solver_options.integrator_type=self.__integrator_type
         self.__ocp.solver_options.nlp_solver_max_iter=self.__nlp_solver_max_iter
         self.__ocp.solver_options.qp_solver_warm_start=1
-
+        self.__ocp.solver_options.regularize_method='CONVEXIFY'
         json_file = os.path.join('_acados_ocp.json')
     
         self.__solver = AcadosOcpSolver(self.__ocp, json_file=json_file)
@@ -367,14 +369,14 @@ class  TNMPC():
         state = np.array([e_d,e_o])
         self.__solver.set(0, 'lbx', state)
         self.__solver.set(0, 'ubx', state)
-  
+        eps=1
         params=np.array([x, y, th, traj[0,0], traj[0,1], velocities[0,0],velocities[0,1]])
         self.__solver.set(0, 'p', params)
    
         Q=self.__Q
         for i in range(self.__N):
             
-            self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.1]), np.zeros(2))))               
+            self.__solver.set(i, 'yref', np.concatenate((np.array([eps,0]), np.zeros(2))))               
             self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
             Q = Q + (i / len(traj)) * (self.__Q_e - Q)
             params=np.array([x, y, th, traj[i,0], traj[i,1], velocities[i,0],velocities[i,1]])
@@ -384,7 +386,7 @@ class  TNMPC():
         self.__solver.cost_set(self.__N, 'W', Q)
         params=np.array([x, y, th, traj[self.__N-1,0], traj[self.__N-1,1], velocities[self.__N-1,0],velocities[self.__N-1,1]])
         self.__solver.set(i, 'p', params)
-        self.__solver.set(self.__N, 'yref',np.array([0.1,0.1]))        
+        self.__solver.set(self.__N, 'yref',np.array([eps,0]))        
         if self.__print_status:
             self.__solver.print_statistics()
         status = self.__solver.solve()
@@ -403,8 +405,8 @@ class  TNMPC():
         self.u_list=np.asarray(u_list)
         self.x_list=np.asarray(x_list)
         for i in range(len(self.x_list)):
-            #self.__solver.set(i, 'x', x_list[i])
-            #self.__solver.set(i, 'u', u_list[i])
+            self.__solver.set(i, 'x', x_list[i])
+            self.__solver.set(i, 'u', u_list[i])
             pass
         return self.u_list, self.x_list
     
