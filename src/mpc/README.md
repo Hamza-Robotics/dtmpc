@@ -29,12 +29,21 @@ cd ~/dtmpc/
 
 Very important note. You must source each time you run the simulation. Each time you start up there is no need to build and install the code. Just run these lines and the libary is setup. 
 ```bash
-cd ~/dtmpc/src/mpc/acados/
-export acados_dir="$(pwd)"
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$acados_dir/lib"
-export ACADOS_SOURCE_DIR="$acados_dir"
-cd ~/dtmpc/
+cd ~/dtmpc
+source setup_acados.sh
 ```
+
+
+
+#### 5. check if the installation is correct.
+```bash
+cd ~/dtmpc/src/mpc/acados
+python3 examples/acados_python/getting_started/minimal_example_ocp.py 
+cd ~/dtmpc
+```
+If you a graph with states and control input over time to reach a set point then it works. 
+
+
 #### Error codes for NLP solver:
 0. ACADOS_SUCCESS,
 1. ACADOS_FAILURE,

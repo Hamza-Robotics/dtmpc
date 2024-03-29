@@ -110,7 +110,7 @@ class  TNMPC():
                         
                         xdot_d,
                         ydot_d,)    
-        eps=1
+        eps=0.001
         m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)**2
         m12 = 0
         m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d+eps)**2
@@ -208,29 +208,84 @@ class  TNMPC():
         self.__ns_e+=0
 
 
-        ed_max=5.0
-        ed_min=0.001
+        ed_max=1000.0
+        ed_min=0.1
         eo_max=0.1
         eo_min=-0.1
 
-        self.__ocp.constraints.lbx_e = np.array([ed_min,eo_min])
-        self.__ocp.constraints.ubx_e = np.array([ed_max,eo_max])
-        self.__ocp.constraints.idxbx_e = np.array([0,1])    
-        self.__ocp.constraints.lsbx_e = np.zeros(2)   
-        self.__ocp.constraints.usbx_e = np.zeros(2)
-        self.__ocp.constraints.idxsbx_e = np.array([0,1]) 
 
-        
-        self.__ocp.constraints.lbx = np.array([ed_min,eo_min])
-        self.__ocp.constraints.ubx = np.array([ed_max,eo_max])
-        self.__ocp.constraints.idxbx = np.array([0,1])    
-        self.__ocp.constraints.lsbx = np.zeros(2)   
-        self.__ocp.constraints.usbx = np.zeros(2)
-        self.__ocp.constraints.idxsbx = np.array([0,1]) 
-
-        self.__ns_i+=2
+        self.__ocp.constraints.lbx_e = np.array([ed_min])
+        self.__ocp.constraints.ubx_e = np.array([ed_max])
+        self.__ocp.constraints.idxbx_e = np.array([0])    
+        self.__ocp.constraints.lsbx_e = np.zeros(1)   
+        self.__ocp.constraints.usbx_e = np.zeros(1)
+        self.__ocp.constraints.idxsbx_e = np.array([0]) 
+        self.__ns_i+=1
         ##self.__ns_0+=2
-        self.__ns_e+=2
+        
+        self.__ocp.constraints.lbx = np.array([ed_min])
+        self.__ocp.constraints.ubx = np.array([ed_max])
+        self.__ocp.constraints.idxbx = np.array([0])    
+        self.__ocp.constraints.lsbx = np.zeros(1)   
+        self.__ocp.constraints.usbx = np.zeros(1)
+        self.__ocp.constraints.idxsbx = np.array([0]) 
+        self.__ns_e+=1
+
+
+        if False:
+            self.__ocp.constraints.lbx_e = np.array([ed_min,eo_min])
+            self.__ocp.constraints.ubx_e = np.array([ed_max,eo_max])
+            self.__ocp.constraints.idxbx_e = np.array([0,1])    
+            self.__ocp.constraints.lsbx_e = np.zeros(2)   
+            self.__ocp.constraints.usbx_e = np.zeros(2)
+            self.__ocp.constraints.idxsbx_e = np.array([0,1]) 
+            self.__ns_i+=2
+            ##self.__ns_0+=2
+            
+            self.__ocp.constraints.lbx = np.array([ed_min,eo_min])
+            self.__ocp.constraints.ubx = np.array([ed_max,eo_max])
+            self.__ocp.constraints.idxbx = np.array([0,1])    
+            self.__ocp.constraints.lsbx = np.zeros(2)   
+            self.__ocp.constraints.usbx = np.zeros(2)
+            self.__ocp.constraints.idxsbx = np.array([0,1]) 
+
+            self.__ns_e+=2
+
+            con_h = [ca.sqrt(ex**2+ey**2)]
+            con_h_vcat = ca.vertcat(*con_h)
+            self.__ocp.model.con_h_expr =con_h_vcat
+            self.__ocp.constraints.lh = (0.001*    np.ones((len(con_h),)))
+            self.__ocp.constraints.uh = (1e3 * np.ones((len(con_h),)))
+            self.__ocp.constraints.lsh = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+            self.__ocp.constraints.ush = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+            self.__ocp.constraints.idxsh = np.array(range(len(con_h)))    # Jsh
+            self.__ns_i+=1
+
+            self.__ocp.model.con_h_expr_e =con_h_vcat
+            self.__ocp.constraints.lh_e = (0.1*    np.ones((len(con_h),)))
+            self.__ocp.constraints.uh_e = (1e3 * np.ones((len(con_h),)))
+            self.__ocp.constraints.lsh_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+            self.__ocp.constraints.ush_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+            self.__ocp.constraints.idxsh_e = np.array(range(len(con_h)))    
+            self.__ns_e+=1
+        #params=np.array([x, y, th, traj[0,0], traj[0,1], velocities[0,0],velocities[0,1]])
+
+        ed=self.__ocp.model.x[0]
+
+        x=self.__ocp.model.p[0]
+        y=self.__ocp.model.p[1]
+        th=self.__ocp.model.p[2]
+        x_d=self.__ocp.model.p[3]
+        y_d=self.__ocp.model.p[4]
+        ex=x-x_d
+        ey=y-y_d
+
+
+
+        #self.__ocp.constraints.con_h_expr = ca.vcat(ca.sqrt(ex**2+ey**2)-0.1)
+        #self.__ocp.constraints.lh = 0
+        #self.__ocp.constraints.uh = 0.1
+
 
         if self.__obstacle:
 
@@ -358,6 +413,22 @@ class  TNMPC():
         return e_d,e_o   
 
     def controller(self,x,traj,velocities):
+        """
+        Calculates MPC control inputs.
+
+        Args:
+            x (numpy.ndarray): Current state.
+            traj (numpy.ndarray): Desired trajectory.
+            velocities (numpy.ndarray): Velocities for each point in the trajectory.
+
+        Returns:
+            tuple: A tuple containing the control inputs and the list of state solutions.
+                - u_list (numpy.ndarray): List of control inputs.
+                - x_list (numpy.ndarray): List of state solutions.
+
+        Note:
+            - u_list[0] returns the current control input.
+        """
         x_current = x[0]
         x=x_current[0] 
         y=x_current[1] 
@@ -369,7 +440,7 @@ class  TNMPC():
         state = np.array([e_d,e_o])
         self.__solver.set(0, 'lbx', state)
         self.__solver.set(0, 'ubx', state)
-        eps=1
+        eps=0.1
         params=np.array([x, y, th, traj[0,0], traj[0,1], velocities[0,0],velocities[0,1]])
         self.__solver.set(0, 'p', params)
    

@@ -4,7 +4,7 @@ nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
 obstacle:  False  #[BOOL]
 to_plotsystem: True
-print_acados_status: False
+print_acados_status: True
 
 #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
 integrator_type: 'ERK'
@@ -13,7 +13,7 @@ nlp_solver_max_iter: 50
 cost_type: "LINEAR_LS"
 Update_Frequency: 1 #¤[Hz]
 Prediction_Frequency: 10 #[hz]
-Prediction_Length: 10 #[s]
+Prediction_Length: 5 #[s]
 nlp_solver_tol_stat: 0.0000000001
 Number_obstacles: 20
 # Robot Constraints  VERY IMPORTANT
@@ -62,18 +62,18 @@ goal_eps: 0.1
 way_point_eps: 2.7
 ## Parameters
 ## Parameters
-L2_Norm: 1.e+8
-L1_Norm: 1.e+8
+L2_Norm: 1.e+10
+L1_Norm: 1.e+10
 
 #Q_matrix:  [1.e-6,1.e-6, 0,0,0]
 #Q_matrix_e:  [1.e-0,1.e-0, 0,0,0]
 #Q_matrix_waypoint: [1.e-5,1.e-5, 0,0,0]
 
-Q_matrix_e:          [1.e-7, 1.e-7]
-Q_matrix:        [1.e-7, 1.e-7]
+Q_matrix_e:          [1.e+5, 1.e+5]
+Q_matrix:          [1.e+5, 1.e+5]
 Q_matrix_waypoint: [1.e-8, 1.e-8]
 #This will mean that the Q matrix wil be factor times shooting nodes more important.
 #If Q_factor is too big then it will miss the waypoints.
 #if Q_factor is too small then it will h
 
-R_matrix:  [1.e-9,1.e-9]
+R_matrix:  [1.e-1,1.e-1]
