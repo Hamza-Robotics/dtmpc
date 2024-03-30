@@ -4,7 +4,7 @@ nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
 obstacle:  False  #[BOOL]
 to_plotsystem: True
-print_acados_status: True
+print_acados_status: False
 
 #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
 integrator_type: 'ERK'
@@ -69,7 +69,7 @@ L1_Norm: 1.e+1
 #Q_matrix_e:  [1.e-0,1.e-0, 0,0,0]
 #Q_matrix_waypoint: [1.e-5,1.e-5, 0,0,0]
 
-Q_matrix:          [1.e-5, 1.e-5,0]
+Q_matrix:          [1.e-5, 1.e-5,0,0,0]
 Q_matrix_e:        [1.e-8, 1.e-8,0]
 Q_matrix_waypoint: [0, 0]
 #This will mean that the Q matrix wil be factor times shooting nodes more important.
