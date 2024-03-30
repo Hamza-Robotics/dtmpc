@@ -7,7 +7,7 @@ import numpy as np
 import scipy
 import os
 
-class  TNMPC():
+class  NMPC():
 
     def __init__(self):
         with open('src/mpc/config/dnmpc_params.yaml') as file:
@@ -16,7 +16,6 @@ class  TNMPC():
         self.frequency=yamlfile['Prediction_Frequency']
         self.__prediction_length = yamlfile['Prediction_Length']
         self.update_frequency=yamlfile['Update_Frequency']
-        self.nlp_solver_tol_stat=yamlfile['nlp_solver_tol_stat']
         self.__robot_model=self.__define_model()
 
 
@@ -42,10 +41,9 @@ class  TNMPC():
 
         # Vehicle parameters
         self.__nlp_solver_type=yamlfile['nlp_solver_type']
-        zeros_states = 0  # Number of zeros to add
-        self.__Q_matrix_e = [0] * zeros_states + yamlfile['Q_matrix_e']
-        self.__Q_matrix = [0] * zeros_states + yamlfile['Q_matrix']
-        self.__Q_matrix_waypoint = [0] * zeros_states + yamlfile['Q_matrix_waypoint']
+        self.__Q_matrix_e=yamlfile['Q_matrix_e']
+        self.__Q_matrix=yamlfile['Q_matrix']        
+        self.__Q_matrix_waypoint=yamlfile['Q_matrix_waypoint']  
         self.__R_matrix=yamlfile['R_matrix']
         self.__print_status=yamlfile['print_acados_status']
         self.__nlp_solver_max_iter=yamlfile['nlp_solver_max_iter']
@@ -66,86 +64,40 @@ class  TNMPC():
         self.__solver_compiler()
     
     def __define_model(self):
-
         model=AcadosModel()
-        ####
-        # Define symbolic variables
+        # control inputs
         v = ca.SX.sym('v')
         th_d = ca.SX.sym('th_d')
-
-        # Define parameters variables
-        # State parameters
+        controls = ca.vertcat(v, th_d)
+        # n_controls = controls.size()[0]
+        # model states
         x = ca.SX.sym('x')
         y = ca.SX.sym('y')
         th = ca.SX.sym('th')
-        # Desired state parameters
-        x_d = ca.SX.sym('x_d')
-        y_d = ca.SX.sym('y_d')
-        # Desired velocity parameters
-        xdot_d = ca.SX.sym('xdot_d')
-        ydot_d = ca.SX.sym('ydot_d')
 
+        states = ca.vertcat(x, 
+                            y, 
+                            th)
+        
 
-        # Define error statements. 
-        e_x=x-x_d
-        e_y=y-y_d
-
-        e_d = ca.SX.sym('e_d')
-        e_o = ca.SX.sym('e_o')
-
-        # Define matrix using symbolic variables
-
-        # Concatenate symbolic variables into a vector
-        controls = ca.vertcat(v, th_d)
-        states = ca.vertcat(
-                        e_d,
-                        e_o)
-
-        paremeters = ca.vertcat(x, 
-                        y, 
-                        th,
-
-                        x_d,
-                        y_d,
-                        
-                        xdot_d,
-                        ydot_d,)    
-        eps=0.001
-        m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)**2
-        m12 = 0
-        m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d+eps)**2
-        m22 = -((e_x/(e_d+eps))*ca.cos(th)+(e_y/(e_d+eps)**2)*ca.sin(th))
-
-        J = ca.vertcat(ca.horzcat(m11,m12),
-                       ca.horzcat(m21,m22))
-        # Concatenate matrices into a single matrix
-        #J = ca.vertcat(ca.horzcat(m11, m12), ca.horzcat(m21, m22))
-        e1 = -((e_x*xdot_d+e_y*ydot_d)/(e_d+eps))
-        e2 = (e_o*(xdot_d*e_x+ydot_d*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/(e_d**2+eps)
-
-        # Calculate the result
-
-        E=ca.vertcat(e1, e2)
-        kin_eq = [ca.mtimes(J, controls)+E]
-
-        ##
-
-        f = ca.Function('f', [states,paremeters, controls], [ca.vcat(kin_eq)], ['state','paremeters', 'control_input'], ['kin_eq'])
+        kin_eq = [(v)*ca.cos(th), 
+               (v)*ca.sin(th),
+               th_d 
+                ]   
+        f = ca.Function('f', [states, controls], [ca.vcat(kin_eq)], ['state', 'control_input'], ['kin_eq'])
+        # acados model
         x_dot = ca.SX.sym('x_dot', len(kin_eq))
-        f_impl = x_dot - f(states,paremeters, controls)
+        f_impl = x_dot - f(states, controls)
 
-        model.f_expl_expr = f(states,paremeters, controls)
+        model.f_expl_expr = f(states, controls)
         model.f_impl_expr = f_impl
         model.x = states
         model.xdot = x_dot
         model.u = controls
-        model.p=paremeters
+        p = ca.vertcat([])
+        model.p=p
         model.name = 'mobile_robot'
-
-
-####    
         return model
-    
     def __linear_cost_function(self):
         
         # cost type
@@ -183,111 +135,43 @@ class  TNMPC():
 
         self.__ocp.cost.yref = np.zeros((self.__ny,))
         self.__ocp.cost.yref_e = np.zeros((self.__ny_e,))
-    
+
+
     def __constraints(self):
+    
         self.__ns_e=0
         self.__ns_0=0
         self.__ns_i=0
-        #x_alg=self.__model.x[0]
-        #y_alg=self.__model.x[1]
-        #th_alg=self.__model.x[2]
-        self.__ocp.constraints.lbu = np.array([self.min_v, (self.min_th_d)])
-        self.__ocp.constraints.ubu = np.array([self.max_v, (self.max_th_d)])
-        self.__ocp.constraints.idxbu = np.array([0, 1])
-        self.__ocp.constraints.lsbu = np.zeros(2)
-        self.__ocp.constraints.usbu = np.zeros(2)
-        self.__ocp.constraints.idxsbu = np.array([0, 1])
-
-        cons_ep=0.001
-
-
-
-        
-        self.__ns_i+=2
-        self.__ns_0+=2
-        self.__ns_e+=0
-
-
-        ed_max=1000.0
-        ed_min=0.1
-        eo_max=0.1
-        eo_min=-0.1
-
-
-        self.__ocp.constraints.lbx_e = np.array([ed_min])
-        self.__ocp.constraints.ubx_e = np.array([ed_max])
-        self.__ocp.constraints.idxbx_e = np.array([0])    
-        self.__ocp.constraints.lsbx_e = np.zeros(1)   
-        self.__ocp.constraints.usbx_e = np.zeros(1)
-        self.__ocp.constraints.idxsbx_e = np.array([0]) 
+        x_alg=self.__model.x[0]
+        y_alg=self.__model.x[1]
+        th_alg=self.__model.x[2]
+        self.__ocp.constraints.lbu = np.array([self.min_v])
+        self.__ocp.constraints.ubu = np.array([self.max_v])
+        self.__ocp.constraints.idxbu = np.array([0])
+        self.__ocp.constraints.lsbu = np.zeros(1)
+        self.__ocp.constraints.usbu = np.zeros(1)
+        self.__ocp.constraints.idxsbu = np.array([0])
         self.__ns_i+=1
-        ##self.__ns_0+=2
-        
-        self.__ocp.constraints.lbx = np.array([ed_min])
-        self.__ocp.constraints.ubx = np.array([ed_max])
-        self.__ocp.constraints.idxbx = np.array([0])    
-        self.__ocp.constraints.lsbx = np.zeros(1)   
-        self.__ocp.constraints.usbx = np.zeros(1)
-        self.__ocp.constraints.idxsbx = np.array([0]) 
-        self.__ns_e+=1
-
-
-        if False:
-            self.__ocp.constraints.lbx_e = np.array([ed_min,eo_min])
-            self.__ocp.constraints.ubx_e = np.array([ed_max,eo_max])
-            self.__ocp.constraints.idxbx_e = np.array([0,1])    
-            self.__ocp.constraints.lsbx_e = np.zeros(2)   
-            self.__ocp.constraints.usbx_e = np.zeros(2)
-            self.__ocp.constraints.idxsbx_e = np.array([0,1]) 
-            self.__ns_i+=2
-            ##self.__ns_0+=2
-            
-            self.__ocp.constraints.lbx = np.array([ed_min,eo_min])
-            self.__ocp.constraints.ubx = np.array([ed_max,eo_max])
-            self.__ocp.constraints.idxbx = np.array([0,1])    
-            self.__ocp.constraints.lsbx = np.zeros(2)   
-            self.__ocp.constraints.usbx = np.zeros(2)
-            self.__ocp.constraints.idxsbx = np.array([0,1]) 
-
-            self.__ns_e+=2
-
-            con_h = [ca.sqrt(ex**2+ey**2)]
-            con_h_vcat = ca.vertcat(*con_h)
-            self.__ocp.model.con_h_expr =con_h_vcat
-            self.__ocp.constraints.lh = (0.001*    np.ones((len(con_h),)))
-            self.__ocp.constraints.uh = (1e3 * np.ones((len(con_h),)))
-            self.__ocp.constraints.lsh = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
-            self.__ocp.constraints.ush = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
-            self.__ocp.constraints.idxsh = np.array(range(len(con_h)))    # Jsh
-            self.__ns_i+=1
-
-            self.__ocp.model.con_h_expr_e =con_h_vcat
-            self.__ocp.constraints.lh_e = (0.1*    np.ones((len(con_h),)))
-            self.__ocp.constraints.uh_e = (1e3 * np.ones((len(con_h),)))
-            self.__ocp.constraints.lsh_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
-            self.__ocp.constraints.ush_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
-            self.__ocp.constraints.idxsh_e = np.array(range(len(con_h)))    
-            self.__ns_e+=1
-        #params=np.array([x, y, th, traj[0,0], traj[0,1], velocities[0,0],velocities[0,1]])
-
-        ed=self.__ocp.model.x[0]
-
-        x=self.__ocp.model.p[0]
-        y=self.__ocp.model.p[1]
-        th=self.__ocp.model.p[2]
-        x_d=self.__ocp.model.p[3]
-        y_d=self.__ocp.model.p[4]
-        ex=x-x_d
-        ey=y-y_d
-
-
-
-        #self.__ocp.constraints.con_h_expr = ca.vcat(ca.sqrt(ex**2+ey**2)-0.1)
-        #self.__ocp.constraints.lh = 0
-        #self.__ocp.constraints.uh = 0.1
-
+        self.__ns_0+=1
 
         if self.__obstacle:
+            self.__ns_e=0
+            self.__ns_0=0
+            self.__ns_i=0
+            x_alg=self.__model.x[0]
+            y_alg=self.__model.x[1]
+            th_alg=self.__model.x[2]
+            self.__ocp.constraints.lbu = np.array([self.min_v, (self.min_th_d)])
+            self.__ocp.constraints.ubu = np.array([self.max_v, (self.max_th_d)])
+            self.__ocp.constraints.idxbu = np.array([0, 1])
+            self.__ocp.constraints.lsbu = np.zeros(2)
+            self.__ocp.constraints.usbu = np.zeros(2)
+            self.__ocp.constraints.idxsbu = np.array([0, 1])
+            self.__ns_i+=2
+            self.__ns_0+=2
+
+
+
 
             for i in range(0,self.__n_params,3):
 
@@ -384,17 +268,14 @@ class  TNMPC():
         self.__ocp.constraints.x0 = x_ref
         self.__ocp.cost.yref = np.concatenate((x_ref, u_ref))
         self.__ocp.cost.yref_e = x_ref
-        #self.__ocp.solver_options.levenberg_marquardt = 1e-5
         #self.__ocp.solver_options.reg_epsilon='CONVEXIFY'
-        #self.__ocp.solver_options.nlp_solver_tol_comp = 1e-13
         self.__ocp.solver_options.qp_solver = self.__QP_solver
-        self.__ocp.solver_options.qp_solver_tol_stat = 1e-10
         self.__ocp.solver_options.nlp_solver_type = self.__nlp_solver_type
         self.__ocp.solver_options.tf = self.__Tf
         self.__ocp.solver_options.integrator_type=self.__integrator_type
         self.__ocp.solver_options.nlp_solver_max_iter=self.__nlp_solver_max_iter
         self.__ocp.solver_options.qp_solver_warm_start=1
-        self.__ocp.solver_options.regularize_method='CONVEXIFY'
+
         json_file = os.path.join('_acados_ocp.json')
     
         self.__solver = AcadosOcpSolver(self.__ocp, json_file=json_file)
@@ -405,66 +286,22 @@ class  TNMPC():
             AcadosOcpSolver.build(self.__ocp.code_export_directory, with_cython=True)
             self.__solver = AcadosOcpSolver.create_cython_solver('acados_ocp.json')
 
-    def e_de_o(self,x,xd,y,yd,th):
-        e_x=x-xd
-        e_y=y-yd
-        e_d=np.sqrt(e_x**2+e_y**2)
-        e_o=(e_y*np.cos(th))/e_d-(e_x*np.sin(th))/e_d
-        return e_d,e_o   
-
-    def controller(self,x,traj,velocities):
-        """
-        Calculates MPC control inputs.
-
-        Args:
-            x (numpy.ndarray): Current state.
-            traj (numpy.ndarray): Desired trajectory.
-            velocities (numpy.ndarray): Velocities for each point in the trajectory.
-
-        Returns:
-            tuple: A tuple containing the control inputs and the list of state solutions.
-                - u_list (numpy.ndarray): List of control inputs.
-                - x_list (numpy.ndarray): List of state solutions.
-
-        Note:
-            - u_list[0] returns the current control input.
-        """
+    def controller(self,x,traj,vel):
+        
+        
+        self.__set_controller_trajectory(traj,vel,[])
         x_current = x[0]
-        x=x_current[0] 
-        y=x_current[1] 
-        th=x_current[2]
 
-        e_d,e_o=self.e_de_o(x,traj[0,0],y,traj[0,1],th)
+        self.__solver.set(0, 'lbx', x_current)
+        self.__solver.set(0, 'ubx', x_current)
 
-
-        state = np.array([e_d,e_o])
-        self.__solver.set(0, 'lbx', state)
-        self.__solver.set(0, 'ubx', state)
-        eps=0.1
-        params=np.array([x, y, th, traj[0,0], traj[0,1], velocities[0,0],velocities[0,1]])
-        self.__solver.set(0, 'p', params)
-   
-        Q=self.__Q
-        for i in range(self.__N):
-            
-            self.__solver.set(i, 'yref', np.concatenate((np.array([eps,0]), np.zeros(2))))               
-            self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
-            Q = Q + (i / len(traj)) * (self.__Q_e - Q)
-            params=np.array([x, y, th, traj[i,0], traj[i,1], velocities[i,0],velocities[i,1]])
-            self.__solver.set(i, 'p', params)
-        
-        
-        self.__solver.cost_set(self.__N, 'W', Q)
-        params=np.array([x, y, th, traj[self.__N-1,0], traj[self.__N-1,1], velocities[self.__N-1,0],velocities[self.__N-1,1]])
-        self.__solver.set(i, 'p', params)
-        self.__solver.set(self.__N, 'yref',np.array([eps,0]))        
-        if self.__print_status:
-            self.__solver.print_statistics()
         status = self.__solver.solve()
         if status != 0 :
             print('acados acados_ocp_solver returned status {}. Exiting.'.format(status))
             pass
-        self.solver_status=status        
+        
+        if self.__print_status:
+            self.__solver.print_statistics()
         self.solver_status=status
 
         u_list=[]
@@ -475,12 +312,31 @@ class  TNMPC():
             x_list.append(self.__solver.get(i,'x'))
         self.u_list=np.asarray(u_list)
         self.x_list=np.asarray(x_list)
+        
         for i in range(len(self.x_list)):
             self.__solver.set(i, 'x', x_list[i])
             self.__solver.set(i, 'u', u_list[i])
             pass
         return self.u_list, self.x_list
     
+    def __set_controller_trajectory(self,traj,vel,params):
+
+        Q=self.__Q
+        for i in range(self.__N):
+            self.__solver.set(i, 'yref', np.concatenate((traj[i, :], np.zeros(3))))               
+            self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
+            #Q = Q + (i / len(traj)) * (self.__Q_e - Q)
+        self.__solver.cost_set(self.__N, 'W', Q)
+        self.__solver.set(self.__N, 'yref', np.concatenate((traj[-1, :],np.zeros(1))))        
+        
+        if False:
+            if index != None:
+                if len(index)>0:
+                    if index[0]==self.__N:
+                        self.__solver.cost_set(self.__N, 'W', Q_matrix_waypoint)
+                    else:
+                        self.__solver.cost_set(index[0], 'W', scipy.linalg.block_diag(Q_matrix_waypoint, self.__R))
+
     def simulator(self,x,u):
         self.__integrator.set('x', x)
         self.__integrator.set('u', u)
