@@ -4,13 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-MPC = NMPC()
-Ts=0.1
-Ts=1/MPC.frequency
-
-
-# Define the initial state
-x0 = np.array([[0, 0, 0] ])
 
 def trajectory(Ts,N):
     traj=[]
@@ -18,11 +11,12 @@ def trajectory(Ts,N):
     s=1
     for i in range(0,N):
         t=(Ts*i+time.time())*s
-        x=3*np.sin(np.pi*t/25)+2
+        
+        x=3*np.sin(np.pi*t/25)
         y=3*np.cos(np.pi*t/25)
 
-        xd=3*np.cos(np.pi*t/25)*np.pi/25*s
-        yd=-3*np.sin(np.pi*t/25)*np.pi/25*s
+        xd=3*np.cos(np.pi*t/25)*np.pi/25
+        yd=-3*np.sin(np.pi*t/25)*np.pi/25
         traj.append([x,y])  
         traj_dot.append([xd,yd])
     return np.asanyarray(traj),np.asanyarray(traj_dot)
@@ -46,58 +40,83 @@ def prediction(x0,u):
 
     return np.asanyarray(x).reshape(-1,3)
 
-plt.ion()
-fig, ax = plt.subplots()
-point, = ax.plot([], [], 'bo')  # Blue point
-robot, = ax.plot([], [], 'ro')  # Blue point
-trajectory_line, = ax.plot([], [], 'b')  # Red line for the trajectory
-robot_prediction, = ax.plot([], [], 'b')  # Red line for the trajectory
+def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie):
+    ed=solution[:,3]
+    eo=solution[:,4]
+    plt.clf()  # Clear the previous plot
 
-# Set x and y limits
-ax.set_xlim(0, MPC.N*Ts)
-ax.set_ylim(-5,5)
+    plt.subplot(2, 2, 1)  # First subplot for x position
+    plt.plot(prediction[:,0], prediction[:,1], 'r-', label='Prediction')
+    plt.plot(xd[:,0], xd[:,1], 'g-', label='Desired Trajectory')
+    plt.plot(x0[0,0], x0[0,1], 'ro', label='Robot Position')  # Red dot for robot position
+    plt.plot(xr[0,0], xr[0,1], 'go', label='Desired Position')  # Red dot for trajectory position
+    plt.title('Position of robot and trajectory.')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.xlim([-10, 10])  # Set x-axis limit
+    plt.ylim([-10, 10])  # Set y-axis limit
+    plt.legend()  # Add legend to the plot
+    plt.grid(True)
 
-ax.set_xlim(-5, 5)
-ax.set_ylim(-5,5)
-# Set labels and title
-ax.set_xlabel('Time')
-ax.set_ylabel('X Value')
-ax.set_title('Real-time X Value Plot')
-U=np.array([[0,0]])
-xr, xd = trajectory(Ts,MPC.N)  # Assuming trajectory() returns x values
-U, S = MPC.controller(x0, xr, xd)
+    plt.subplot(2, 2, 2)  # Second subplot for y position
+    plt.plot(np.arange(0, len(ed)*0.1, Ts), ed, 'g-', label='ed')
+    plt.plot(np.arange(0, len(eo)*0.1, Ts), eo, 'r-', label='eo')
+    plt.title('Solution over Time')
+    plt.xlabel('Time')
+    plt.ylabel('ed and eo')
+    plt.xlim([0, 10])  # Set x-axis limit
+    plt.ylim([-6, 6])  # Set y-axis limit
+    plt.legend()  # Add legend to the plot
+    plt.grid(True)
 
 
+    plt.subplot(2, 2, 3)  # Fourth subplot for diagnostics
+    plt.plot(np.arange(0, len(ed_serie)*0.1, Ts), ed_serie, 'm-', label='ed')
+    plt.plot(np.arange(0, len(eo_serie)*0.1, Ts), eo_serie, 'g-', label='eo')
+    plt.xlim([0, 10])  # Set x-axis limit
+    plt.ylim([-1, 5])  # Set y-axis limit
+    plt.title('Diagnostics Over Time')
+    plt.xlabel('Time')
+    plt.ylabel('ed and eo evolution over time')
+    plt.legend()  # Add legend to the plot
+
+    plt.grid(True)
+
+    if False:
+
+        plt.subplot(2, 2, 2)  # Fourth subplot for diagnostics
+        plt.plot(range(len(diagnostics)), diagnostics, 'm-')
+        plt.title('Diagnostics Over Time')
+        plt.xlabel('Time')
+        plt.ylabel('Diagnostics Value')
+        plt.grid(True)
+
+    plt.tight_layout()  # Adjust layout to prevent overlapping
+
+    plt.pause(0.01)  # Pause to allow the plot to update
+
+MPC = NMPC()
+Ts=0.1
+Ts=1/MPC.frequency
+
+
+# Define the initial state
+x0 = np.array([[0, 0, 0] ])
+ed = np.zeros(MPC.N)
+eo = np.zeros(MPC.N)
 # Start the while loop
 while True:
     # Get the latest trajectory data
     xr, xd = trajectory(Ts,MPC.N)  # Assuming trajectory() returns x values
-    U,_=MPC.controller(x0, xr, xd)
+    U,solution=MPC.controller(x0, xr, xd)
     x_prediction=prediction(x0,U)
     x0=propagate(x0,U[0,0],U[0,1],Ts)
-    robot.set_xdata(x0[0, 0])
-    robot.set_ydata(x0[0, 1])
-    # Update the plot with the latest x value
-    point.set_xdata(xr[0, 0])  # Assuming you want to plot the x values against time
-    point.set_ydata(xr[0, 1])  # Assuming you want to plot the first column of xr against time
-    xd=xd[0,0]
-    yd=xr[0,1]
-    ex=x0[0,0]-xr[0,0]
-    ey=x0[0,1]-xr[0,1]
-    ed=np.sqrt(ex**2+ey**2)
-    eo=(ey/ed)*np.cos(x0[0,2])-(ex/ed)*np.sin(x0[0,2])
-    trajectory_line.set_xdata(xr[:, 0])
-    trajectory_line.set_ydata(xr[:, 1])
-    robot_prediction.set_xdata(_[:, 0])
-    robot_prediction.set_ydata(_[:, 1])
 
-    # Draw the plot
-    plt.draw()
-    plt.pause(0.01)  # Pause to allow the plot to update (adjust as needed)
-
-
-length=len(S)
-time_vector = np.arange(0, length*Ts, Ts)
-plt.plot(time_vector, S[:, 0])
-plt.plot(time_vector, S[:, 1])
-plt.show(block=True)
+    # Append 0.1 to the end of ed
+    ed = np.append(ed, solution[0,3])
+    ed = ed[1:]
+    eo = np.append(eo, solution[0,4])
+    eo = eo[1:]
+    
+    diagnostics = np.random.randn(len(xr))  # Assuming the same length as xr
+    update_plot(x0, xr, x_prediction,solution,ed,eo)  # Update the plot
