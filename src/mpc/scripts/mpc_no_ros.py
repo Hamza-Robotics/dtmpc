@@ -42,8 +42,8 @@ def prediction(x0,u):
     return np.asanyarray(x).reshape(-1,3)
 
 def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,Ts):
-    ed=solution[:,3]
-    eo=solution[:,4]
+    ed=solution[:,0]
+    eo=solution[:,1]
     xp=prediction[:,0]
     yp=prediction[:,1]
     use_prediction = True  # Set to True if you want to plot the prediction instead of the solution
@@ -64,7 +64,7 @@ def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,Ts):
 
     else:
         plt.subplot(2, 2, 1)  # First subplot for x position
-        plt.plot(xp[:,0], xp[:,1], 'r-', label='Prediction')
+        plt.plot(xp[:,0], yp[:,1], 'r-', label='Prediction')
         plt.plot(xd[:,0], xd[:,1], 'g-', label='Desired Trajectory')
         plt.plot(x0[0,0], x0[0,1], 'ro', label='Robot Position')  # Red dot for robot position
         plt.plot(xr[0,0], xr[0,1], 'go', label='Desired Position')  # Red dot for trajectory position
@@ -144,6 +144,10 @@ start_time = time.time()
 
 
 xr, xd = trajectory(Ts,MPC.N)  # Assuming trajectory() returns x values
+# Define the initial state
+#x0 = np.array([[xr[0,0]+0.3, xr[0,1]+0.1, 0] ])
+ed = np.zeros(MPC.N)
+eo = np.zeros(MPC.N)
 for i in range(10):
     U,solution=MPC.controller(x0, xr, xd)
 while True:
@@ -154,9 +158,9 @@ while True:
     x0=propagate(x0,U[0,0],U[0,1],Ts)
 
     # Append 0.1 to the end of ed
-    ed = np.append(ed, solution[0,3])
+    ed = np.append(ed, solution[0,0])
     ed = ed[1:]
-    eo = np.append(eo, solution[0,4])
+    eo = np.append(eo, solution[0,1])
     eo = eo[1:]
     
     diagnostics = np.random.randn(len(xr))  # Assuming the same length as xr
