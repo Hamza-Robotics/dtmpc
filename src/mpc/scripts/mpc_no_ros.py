@@ -142,6 +142,10 @@ control_hz = 10
 control_period = 1 / control_hz
 start_time = time.time()
 
+
+xr, xd = trajectory(Ts,MPC.N)  # Assuming trajectory() returns x values
+for i in range(10):
+    U,solution=MPC.controller(x0, xr, xd)
 while True:
     # Get the latest trajectory data
     xr, xd = trajectory(Ts,MPC.N)  # Assuming trajectory() returns x values

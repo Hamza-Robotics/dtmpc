@@ -6,7 +6,7 @@ obstacle:  False  #[BOOL]
 Number_obstacles: 20 #[INT]
 print_acados_status: True #[BOOL]
 integrator_type: 'ERK'  #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
-nlp_solver_max_iter: 5 #[INT]
+nlp_solver_max_iter: 15 #[INT]
 cost_type: "LINEAR_LS"
 
 # MPC parameters
@@ -21,23 +21,28 @@ angle_velocity_max: 60.  # [degrees/s]
 angle_velocity_min: -60. # [degrees/s]
 
 ### Error constraints
-ed_min: 0.0001 # [m]
-ed_max: 0.14 # [m]
+ed_min: 1 # [m]
+ed_max: 199.54 # [m]
 eo_min: -0.3 # [rad]
 eo_max: 0.3 # [rad]
 
 
 
 # Slack variables
-L2_Norm: 1.e+2 
-L1_Norm: 1.e+2
+L2_Norm: 1.e+10
+L1_Norm: 1.e+10
 
 # Weighting matrices
 #Q_matrix:  [1.e-6,1.e-6, 0,0,0]
 #Q_matrix_e:  [1.e-0,1.e-0, 0,0,0]
 #Q_matrix_waypoint: [1.e-5,1.e-5, 0,0,0]
 #Q_matrix:          [1.e-5, 1.e-5,0,0,0,]
-Q_matrix:          [1.e+1,1.e+1,0, 0,0]
-Q_matrix_e:          [1.e+1,1.e+1,0, 0,0]
+
+#Q_matrix:          [1.e+1,1.e+1,0, 0,0]
+#Q_matrix_e:        [1.e+1,1.e+1,0, 0,0]
+
+Q_matrix:          [0, 0,0,1.e+1,1.e+1]
+Q_matrix_e:        [0, 0,0,1.e+1,1.e+1]
+
 #Q_matrix_waypoint: [0, 0]
-R_matrix:  [1.e-11,1.e-11]
+R_matrix:  [1.e-9,1.e-9]
