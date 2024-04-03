@@ -57,18 +57,26 @@ class  NMPC():
 
 
         self.__obstacle=yamlfile['obstacle']
-
-
+        self.__numberofobs=yamlfile['Number_obstacles']
 
 
         self.__linear_cost_function()
         self.__constraints()
         self.__solver_compiler()
     
+
+    def __generate_obstacle_params(self):
+        obs=[]
+        for i in range(1):
+            obs_temp=np.array([ca.SX.sym('x'+str(i)+'_obs'),ca.SX.sym('y'+str(i)+'_obs'),ca.SX.sym('r'+str(i)+'_obs')]).reshape(-1,1)            
+            obs.append(obs_temp)
+        print("hehehehe",obs)
+        return ca.vertcat(*obs)
+    
     def __define_model(self):
         model=AcadosModel()
         # control inputs
-        v = ca.SX.sym('v')
+        v = ca.SX.sym('vs')
         th_d = ca.SX.sym('th_d')
         controls = ca.vertcat(v, th_d)
         # n_controls = controls.size()[0]
@@ -94,33 +102,36 @@ class  NMPC():
         e_d = ca.SX.sym('e_d')
         e_o = ca.SX.sym('e_o')
 
-        states = ca.vertcat(e_d,
+        states = ca.vertcat(
+                            x, 
+                            y, 
+                            th,
+                            e_d,
                             e_o)
-        
-        paremeters = ca.vertcat(
-                    x, 
-                    y, 
-                    th,
-                    x_d,
-                    y_d,
-                xdot_d,
-                    ydot_d)   
-        eps=0
+        obs=self.__generate_obstacle_params()
+        paremeters  = ca.vertcat(x_d,y_d,xdot_d,ydot_d,obs)   
+        print("pp",paremeters)
+
+
+        eps=0.000001
         m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)
         m12 = 0
         m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d**2+eps)
         m22 = -((e_x/(e_d+eps))*ca.cos(th)+(e_y/(e_d**2+eps))*ca.sin(th))
         
         
-        dt=0.1
+        dt=1/self.frequency
         e1 = -((e_x*xdot_d*dt+e_y*ydot_d*dt)/(e_d+eps))
         e2 = (e_o*(xdot_d*dt*e_x+ydot_d*dt*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/(e_d**2+eps)
         
         J = ca.vertcat(ca.horzcat(m11,m12),
                        ca.horzcat(m21,m22))
         E=ca.vertcat(e1, e2)
-
-        kin_eq = [(ca.mtimes(J, controls)+E)]   
+        k=1
+        kin_eq = [ca.vertcat(v*ca.cos(th)*k, 
+                           (v)*ca.sin(th)*k,
+                             th_d*k,
+            (ca.mtimes(J, controls)+E))]   
  
 
         f = ca.Function('f', [states,paremeters, controls], [ca.vcat(kin_eq)], ['state','paremeters', 'control_input'], ['kin_eq'])
@@ -161,7 +172,6 @@ class  NMPC():
         self.__ocp.cost.W_e=  np.diag(self.__Q_matrix)# [x,y,x_d,y_d,th,th_d]
         self.__ocp.cost.Vx = np.zeros((self.__ny, self.__nx))
         self.__ocp.cost.Vx[:self.__nx, :self.__nx] = np.eye(self.__nx)
-
         self.__ocp.cost.Vx_0 = np.zeros((self.__ny, self.__nx))
         self.__ocp.cost.Vx_0[:self.__nx, :self.__nx] = np.eye(self.__nx)
         self.__ocp.cost.Vu = np.zeros((self.__ny, self.__nu))
@@ -181,14 +191,14 @@ class  NMPC():
         self.__ns_e=0
         self.__ns_0=0
         self.__ns_i=0
-
-        e_d_alg=self.__model.x[0]
-        e_o_alg=self.__model.x[1]
-        x_alg=self.__model.p[0]
-        y_alg=self.__model.p[1]
-        th_alg=self.__model.p[2]
-        x_d_alg=self.__model.p[3]
-        y_d_alg=self.__model.p[4]
+        x_alg=self.__model.x[0]
+        y_alg=self.__model.x[1]
+        th_alg=self.__model.x[2]
+        e_d_alg=self.__model.x[3]
+        e_o_alg=self.__model.x[4]
+        
+        x_d_alg=self.__model.p[0]
+        y_d_alg=self.__model.p[1]
 
 
         self.__ocp.constraints.lbu = np.array([self.min_v])
@@ -200,36 +210,41 @@ class  NMPC():
         self.__ns_i+=1
         self.__ns_0+=1
 
-        con_h=[#(x_alg-(-.34))**2 + (y_alg-(+1.76))**2 - (0.1)**2,
-            #e_d_alg**2,
-            e_d_alg**2
-            #e_d_alg**2,
-            
-            
-                ]
-        
-        con_h_vcat=ca.vcat(con_h)
-        self.__ocp.model.con_h_expr =con_h_vcat
-        self.__ocp.constraints.lh =np.array([self.__ed_min**2,
-                                            ])
-        self.__ocp.constraints.uh =np.array([self.__ed_max**2,
-                                            ])
-        self.__ocp.constraints.lsh = np.zeros(1)             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
-        self.__ocp.constraints.ush = np.zeros(1)             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
-        self.__ocp.constraints.idxsh = np.array([0])    # Jsh
-        self.__ns_i+=1
 
+        ex=x_alg-x_d_alg
+        ey=y_alg-y_d_alg
 
+  
+        if True:
+            con_h=[#(x_alg-(-.34))**2 + (y_alg-(+1.76))**2 - (0.1)**2,
+                #e_d_alg**2,
+                e_d_alg**2,
 
-        self.__ocp.model.con_h_expr_e =con_h_vcat
-        self.__ocp.constraints.lh_e =np.array([self.__ed_min**2,
+                #ca.sqrt(e_d_alg**2+e_o_alg**2+0.1),
+                
+                    ]
+            con_h_vcat=ca.vcat(con_h)
+            self.__ocp.model.con_h_expr =con_h_vcat
+            self.__ocp.constraints.lh =np.array([self.__ed_min**2,
                                                 ])
-        self.__ocp.constraints.uh_e =np.array([self.__ed_max**2,
+            self.__ocp.constraints.uh =np.array([self.__ed_max**2,
                                                 ])
-        self.__ocp.constraints.lsh_e = np.zeros(1)             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
-        self.__ocp.constraints.ush_e = np.zeros(1)             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
-        self.__ocp.constraints.idxsh_e = np.array([0])    # Jsh
-        self.__ns_e+=1
+            self.__ocp.constraints.lsh = np.zeros(1)             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+            self.__ocp.constraints.ush = np.zeros(1)             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+            self.__ocp.constraints.idxsh = np.array([0])    # Jsh
+            self.__ns_i+=1
+
+
+
+            self.__ocp.model.con_h_expr_e =con_h_vcat
+            self.__ocp.constraints.lh_e =np.array([self.__ed_min**2,
+                                                    ])
+            self.__ocp.constraints.uh_e =np.array([self.__ed_max**2,
+                                                    ])
+            self.__ocp.constraints.lsh_e = np.zeros(1)             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+            self.__ocp.constraints.ush_e = np.zeros(1)             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+            self.__ocp.constraints.idxsh_e = np.array([0])    # Jsh
+            self.__ns_e+=1
 
   
         if False:
@@ -418,7 +433,7 @@ class  NMPC():
         e_o=(e_y*np.cos(th))/e_d-(e_x*np.sin(th))/e_d
         return e_d,e_o   
     
-    def controller(self,x,traj,vel):
+    def controller(self,x,traj,vel,obs,robots=None):
         
         
         x_current = x[0]
@@ -426,13 +441,12 @@ class  NMPC():
         y=x_current[1] 
         th=x_current[2]
         e_d,e_o=self.__e_de_o(x,traj[0,0],y,traj[0,1],th)
-        state = np.array([e_d,e_o])
+        state = np.array([x,y,th,e_d,e_o])
         print(state)
-        print(x_current)    
         if not self.__initialized:
             self.__initialize(state)
 
-        self.__set_controller_trajectory(x,y,th,traj,vel)
+        self.__set_controller_trajectory(x,y,th,traj,vel,obs)
 
         self.__solver.set(0, 'lbx', state)
         self.__solver.set(0, 'ubx', state)
@@ -487,30 +501,22 @@ class  NMPC():
         self.__solver.set(self.__N, 'x', state)
         #self.__initialized=True 
 
-    def __set_controller_trajectory(self,x,y,th,traj,vel):
+    def __set_controller_trajectory(self,x,y,th,traj,vel,obs,robots=None):
 
         Q=self.__Q
         Q_e=self.__Q_e
         for i in range(self.__N):
-            if i == 0:
-                self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0]),np.zeros(2))))     
-                params=np.array([x,y,th,traj[i,0], traj[i,1], vel[i,0],vel[i,1]])          
-                self.__solver.set(i, 'p', params)
-                self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
-                self.__solver.get_cost()
-            else:
-
-                self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0]),np.zeros(2))))     
-                params=np.array([x,y,th,traj[i,0], traj[i,1], vel[i,0],vel[i,1]])          
-                self.__solver.set(i, 'p', params)
+                
+                self.__solver.set(i, 'yref', np.concatenate((np.zeros(3),np.array([0.1,0.0]),np.zeros(2)))) 
+                print(self.__set_params(traj[i],vel[i],obs,1)[0])       
+                self.__solver.set(i, 'p', self.__set_params(traj[i],vel[i],obs,robots))
                 self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q_e, self.__R))
-                #Q = Q + (i / len(traj)) * (Q-self.__Q_e)
-                #print(Q)
-                pass
-        self.__solver.cost_set(self.__N, 'W', Q_e)
-        params_e=np.array([x,y,th,traj[self.__N-1,0], traj[self.__N-1,1], vel[self.__N-1,0],vel[self.__N-1,1]])          
-        self.__solver.set(self.__N, 'p', params_e)
-        self.__solver.set(self.__N, 'yref', ((np.array([0.01,0]))))      
+                Q = Q - (i / len(traj)) * (Q-self.__Q_e)
+          
+
+        self.__solver.cost_set(self.__N, 'W', Q)
+        self.__solver.set(self.__N, 'p', self.__set_params(traj[self.__N-1],vel[self.__N-1],obs,robots))
+        self.__solver.set(self.__N, 'yref', np.concatenate((np.zeros(3),np.array([0.1,0.0]))))      
         
 
         if False:
@@ -521,6 +527,18 @@ class  NMPC():
                     else:
                         self.__solver.cost_set(index[0], 'W', scipy.linalg.block_diag(Q_matrix_waypoint, self.__R))
 
+    def __set_params(self,traj,vel,obs,robots=None):
+        xd=traj[0]
+        yd=traj[1]
+        xdotd=vel[0]
+        ydotd=vel[1]
+        
+   
+        params=np.array([xd,yd,xdotd,ydotd])
+        for i in range(len(obs)):
+            params = np.concatenate((params, obs[i]))
+        return params
+    
     def simulator(self,x,u):
         self.__integrator.set('x', x)
         self.__integrator.set('u', u)

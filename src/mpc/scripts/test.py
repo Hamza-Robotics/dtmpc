@@ -3,12 +3,13 @@ import numpy as np
 
 from acados_template import AcadosOcp, AcadosOcpSolver, AcadosSimSolver, AcadosModel
 
-
-####
-# Define symbolic variables
 model=AcadosModel()
+# control inputs
 v = ca.SX.sym('v')
 th_d = ca.SX.sym('th_d')
+controls = ca.vertcat(v, th_d)
+# n_controls = controls.size()[0]
+# model stat
 
 # Define parameters variables
 # State parameters
@@ -24,47 +25,41 @@ ydot_d = ca.SX.sym('ydot_d')
 
 
 # Define error statements. 
-e_x=x-x_d
-e_y=y-y_d
+e_x=(x-x_d)
+e_y=(y-y_d)
 
 e_d = ca.SX.sym('e_d')
 e_o = ca.SX.sym('e_o')
 
-# Define matrix using symbolic variables
-
-# Concatenate symbolic variables into a vector
-controls = ca.vertcat(v, th_d)
 states = ca.vertcat(
-                e_d,
-                e_o)
+x, 
+y, 
+th,
+e_d,
+e_o)
 
-paremeters = ca.vertcat(x, 
-                y, 
-                th,
-
-                x_d,
-                y_d,
-                
-                xdot_d,
-                ydot_d,)    
-eps=0.1
-m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)**2
+paremeters = ca.vertcat(
+x_d,
+y_d,
+xdot_d,
+ydot_d)   
+eps=0.000001
+m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)
 m12 = 0
-m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d+eps)**2
-m22 = -((e_x/(e_d+eps))*ca.cos(th)+(e_y/(e_d+eps)**2)*ca.sin(th))
+m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d**2+eps)
+m22 = -((e_x/(e_d+eps))*ca.cos(th)+(e_y/(e_d**2+eps))*ca.sin(th))
 
-J = ca.vertcat(ca.horzcat(m11,m12),ca.horzcat(m21,m22))
-# Concatenate matrices into a single matrix
-#J = ca.vertcat(ca.horzcat(m11, m12), ca.horzcat(m21, m22))
-e1 = -(e_x*xdot_d+e_y*ydot_d)/(e_d+eps)
-e2 = (e_o*(xdot_d*e_x+ydot_d*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/(e_d+eps)**2
 
-# Calculate the result
+dt=0.1
+e1 = -((e_x*xdot_d*dt+e_y*ydot_d*dt)/(e_d+eps))
+e2 = (e_o*(xdot_d*dt*e_x+ydot_d*dt*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/(e_d**2+eps)
 
+J = ca.vertcat(ca.horzcat(m11,m12),
+ca.horzcat(m21,m22))
 E=ca.vertcat(e1, e2)
-kin_eq = [ca.mtimes(J, controls)]
 
-##
+kin_eq = [(ca.mtimes(J, controls)+E)]   
+
 
 f = ca.Function('f', [states,paremeters, controls], [ca.vcat(kin_eq)], ['state','paremeters', 'control_input'], ['kin_eq'])
 x_dot = ca.SX.sym('x_dot', len(kin_eq))
@@ -77,4 +72,3 @@ model.xdot = x_dot
 model.u = controls
 model.p=paremeters
 model.name = 'mobile_robot'
-
