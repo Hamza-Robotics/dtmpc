@@ -42,11 +42,10 @@ def prediction(x0,u):
     return np.asanyarray(x).reshape(-1,3)
 
 def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,obs,Ts):
-    ed=solution[:,3]
-    eo=solution[:,4]
-    xp=solution[:,0]
-    yp=solution[:,1]
-    use_prediction = False  # Set to True if you want to plot the prediction instead of the solution
+    ed=solution[:,0]
+    eo=solution[:,1]
+
+    use_prediction = True  # Set to True if you want to plot the prediction instead of the solution
     plt.clf()  # Clear the previous plot
     if use_prediction:
         plt.subplot(2, 2, 1)  # First subplot for x position
@@ -54,6 +53,9 @@ def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,obs,Ts):
         plt.plot(xd[:,0], xd[:,1], 'g-', label='Desired Trajectory')
         plt.plot(x0[0,0], x0[0,1], 'ro', label='Robot Position')  # Red dot for robot position
         plt.plot(xr[0,0], xr[0,1], 'go', label='Desired Position')  # Red dot for trajectory position
+        for ob in obs:
+            circle = plt.Circle((ob[0], ob[1]), ob[2], color='r', fill=False)
+            plt.gca().add_patch(circle) 
         plt.title('Position of robot and trajectory.')
         plt.xlabel('x')
         plt.ylabel('y')
@@ -163,9 +165,9 @@ while True:
     x0=propagate(x0,U[0,0],U[0,1],Ts)
 
     # Append 0.1 to the end of ed
-    ed = np.append(ed, solution[0,3])
+    ed = np.append(ed, solution[0,0])
     ed = ed[1:]
-    eo = np.append(eo, solution[0,4])
+    eo = np.append(eo, solution[0,1])
     eo = eo[1:]
     
     diagnostics = np.random.randn(len(xr))  # Assuming the same length as xr
