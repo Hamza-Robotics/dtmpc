@@ -46,7 +46,7 @@ def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,obs,Ts):
     eo=solution[:,4]
     xp=solution[:,0]
     yp=solution[:,1]
-    use_prediction = True  # Set to True if you want to plot the prediction instead of the solution
+    use_prediction = False  # Set to True if you want to plot the prediction instead of the solution
     plt.clf()  # Clear the previous plot
     if use_prediction:
         plt.subplot(2, 2, 1)  # First subplot for x position
@@ -146,7 +146,7 @@ control_hz = 10
 control_period = 1 / control_hz
 start_time = time.time()
 
-obs=[[0,0,1.1]]
+obs=[[2,6,1.1]]
 
 xr, xd = trajectory(Ts,MPC.N)  # Assuming trajectory() returns x values
 # Define the initial state
