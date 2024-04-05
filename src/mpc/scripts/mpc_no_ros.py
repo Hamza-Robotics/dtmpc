@@ -16,26 +16,22 @@ def trajectory(Ts,N):
         x=3*np.sin(np.pi*t/25) +5
         y=3*np.cos(np.pi*t/25)+5
 
-        xd=(3*np.cos(np.pi*t/25)*np.pi/25)*s
-        yd=(-3*np.sin(np.pi*t/25)*np.pi/25)*s
+        xd=3*np.cos(np.pi*t/25)*np.pi/25
+        yd=-3*np.sin(np.pi*t/25)*np.pi/25
         traj.append([x,y])  
         traj_dot.append([xd,yd])
     return np.asanyarray(traj),np.asanyarray(traj_dot)
 
-def propagate(x0,a,thdd,Ts):
+def propagate(x0,v,thd,Ts):
     x=x0[0,0]
     y=x0[0,1]
     th=x0[0,2]
-    v=x0[0,3]
-    thd=x0[0,4]
-
-    v=v+a*Ts
-    thd=thd+thdd*Ts
-    #print("a: ",a, "thdd: ",thdd)
-    x=x+v*np.cos(th)*Ts
-    y=y+v*np.sin(th)*Ts
     theta=th+thd*Ts
-    return np.array([[x,y,theta,v,thd]])
+
+    x=x+v*np.cos(theta)*Ts
+    y=y+v*np.sin(theta)*Ts
+    
+    return np.array([[x,y,theta]])
 
 def prediction(x0,u):
     x=[]
@@ -43,7 +39,8 @@ def prediction(x0,u):
         x.append(propagate(x0,u[i,0],u[i,1],Ts))
         x0=x[-1]
 
-    return np.concatenate(x, axis=0)  # Concatenate the list of arrays into a single 2D array
+
+    return np.asanyarray(x).reshape(-1,3)
 
 def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,obs,Ts):
     ed=solution[:,0]
@@ -85,6 +82,7 @@ def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,obs,Ts):
         plt.ylim([-10, 10])  # Set y-axis limit
         plt.legend()  # Add legend to the plot
         plt.grid(True)  
+    print(Ts)
     plt.subplot(2, 2, 2)  # Second subplot for y position
     plt.plot(np.arange(0, len(ed)*Ts, Ts), ed, 'g-', label='ed')
     plt.plot(np.arange(0, len(eo)*Ts, Ts), eo, 'r-', label='eo')
@@ -140,7 +138,7 @@ Ts=1/MPC.frequency
 
 
 # Define the initial state
-x0 = np.array([[2.5, 2.5, 0,0,0] ])
+x0 = np.array([[2.5, 2.5, 0] ])
 ed = np.zeros(MPC.N)
 eo = np.zeros(MPC.N)
 # Start the while loop
@@ -155,7 +153,7 @@ obs=[[2,6,1.1]]
 
 xr, xd = trajectory(Ts,MPC.N)  # Assuming trajectory() returns x values
 # Define the initial state
-x0 = np.array([[xr[0,0]+0.3, xr[0,1]+0.1, 0,0,0] ])
+x0 = np.array([[xr[0,0]+0.3, xr[0,1]+0.1, 0] ])
 ed = np.zeros(MPC.N)
 eo = np.zeros(MPC.N)
 for i in range(10):
@@ -165,20 +163,6 @@ while True:
     xr, xd = trajectory(Ts,MPC.N)  # Assuming trajectory() returns x values
     U,solution=MPC.controller(x0, xr, xd,obs)
     x_prediction=prediction(x0,U)
-
-    if False:
-        for i in range(len(U)):
-
-            x0=propagate(x0,U[i,0],U[i,1],Ts)
-
-            # Append 0.1 to the end of ed
-            ed = np.append(ed, solution[0,0])
-            ed = ed[1:]
-            eo = np.append(eo, solution[0,1])
-            eo = eo[1:]
-            
-            diagnostics = np.random.randn(len(xr))  # Assuming the same length as xr
-            update_plot(x0, xr, x_prediction,solution,ed,eo,obs,Ts)  # Update the plot
     x0=propagate(x0,U[0,0],U[0,1],Ts)
 
     # Append 0.1 to the end of ed
