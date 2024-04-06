@@ -23,8 +23,8 @@ angle_velocity_min: -60. # [degrees/s]
 ### Error constraints
 ed_min: 0.1 # [m]
 ed_max: 10.54 # [m]
-eo_min: -10.3 # [rad]
-eo_max: 10.3 # [rad]
+eo_min: -0.3 # [rad]
+eo_max: 0.3 # [rad]
 
 
 
@@ -40,8 +40,8 @@ L1_Norm: 1.e+5
 
 #Q_matrix:          [1.e+4,1.e+4,0, 1.e+1,1.e+1]
 #Q_matrix_e:        [1.e+4,1.e+4,0, 1.e+1,1.e+1]
-Q_matrix:          [1.e+4,1.e+4]
-Q_matrix_e:        [1.e+4,1.e+4]
+Q_matrix:          [1.e+4,1.e+1]
+Q_matrix_e:        [1.e+4,1.e+1]
 
 #Q_matrix_waypoint: [0, 0]
 R_matrix:  [1.e-9,1.e-9]
