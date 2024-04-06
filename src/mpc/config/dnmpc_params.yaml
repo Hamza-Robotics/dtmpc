@@ -4,7 +4,7 @@ nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
 obstacle:  False  #[BOOL]
 Number_obstacles: 1 #[INT]
-print_acados_status: True #[BOOL]
+print_acados_status: False #[BOOL]
 integrator_type: 'ERK'  #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
 nlp_solver_max_iter: 15 #[INT]
 cost_type: "LINEAR_LS"
@@ -15,17 +15,24 @@ Prediction_Frequency: 10 #[hz]
 Prediction_Length: 10 #[s]
 
 ### Input constraints 
-velocity_max: 3.5 #  [m/s]
-velocity_min: -3.5 # [m/s]
+velocity_max: 0.5 #  [m/s]
+velocity_min: -0.5 # [m/s]
 angle_velocity_max: 60.  # [degrees/s]
 angle_velocity_min: -60. # [degrees/s]
 
-### Error constraints
+### Error Distance constraints
 ed_min: 0.1 # [m]
-ed_max: 10.54 # [m]
-eo_min: -0.3 # [rad]
-eo_max: 0.3 # [rad]
+ed_max: 1.54 # [m]
 
+ed_min_f: 0.01
+ed_max_f: 0.02
+### Error Distance constraints
+
+eo_min: -0.2 # [rad]
+eo_max: 0.2 # [rad]
+
+eo_min_f: -0.01 # [rad]
+eo_max_f: 0.01 # [rad]
 
 
 # Slack variables
@@ -40,8 +47,8 @@ L1_Norm: 1.e+5
 
 #Q_matrix:          [1.e+4,1.e+4,0, 1.e+1,1.e+1]
 #Q_matrix_e:        [1.e+4,1.e+4,0, 1.e+1,1.e+1]
-Q_matrix:          [1.e+4,1.e+1]
-Q_matrix_e:        [1.e+4,1.e+1]
+Q_matrix:          [1.e+1,1.e+1]
+Q_matrix_e:        [1.e+1,1.e+1]
 
 #Q_matrix_waypoint: [0, 0]
 R_matrix:  [1.e-9,1.e-9]
