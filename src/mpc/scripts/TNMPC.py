@@ -132,8 +132,8 @@ class  NMPC():
                        ca.horzcat(m21,m22))
         E=ca.vertcat(e1, e2)
         k=1
-        kin_eq = [(ca.mtimes(J, controls)+E)]   
- 
+        kin_eq = [ca.vertcat(ca.mtimes(J, controls)+E)]   
+
 
         f = ca.Function('f', [states,paremeters, controls], [ca.vcat(kin_eq)], ['state','paremeters', 'control_input'], ['kin_eq'])
         x_dot = ca.SX.sym('x_dot', len(kin_eq))
@@ -526,7 +526,7 @@ class  NMPC():
         Q_e=self.__Q_e
         for i in range(self.__N):
                 
-                self.__solver.set(i, 'yref', np.concatenate((np.array([0.01,0.0]),np.zeros((2)))))
+                self.__solver.set(i, 'yref', np.concatenate((np.zeros((self.__nx)),np.zeros((self.__nu)))))
 
                 self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robots))
                 self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
@@ -535,7 +535,7 @@ class  NMPC():
 
         self.__solver.cost_set(self.__N, 'W', Q_e)
         self.__solver.set(self.__N, 'p', self.__set_params(x,y,th,traj[self.__N-1],vel[self.__N-1],obs,robots))
-        self.__solver.set(self.__N, 'yref', (np.array([0.01,0.0])))     
+        self.__solver.set(self.__N, 'yref', np.zeros((self.__nx)))     
         
 
         if False:
