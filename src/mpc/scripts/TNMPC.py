@@ -109,11 +109,11 @@ class  NMPC():
 
         states = ca.vertcat(
                             e_d,
-                            e_o)
+                            e_o,
+                            th)
         obs=self.__generate_obstacle_params()
         paremeters  = ca.vertcat(x, 
                             y, 
-                            th,
                             x_d,
                             y_d,
                             xdot_d,
@@ -121,11 +121,13 @@ class  NMPC():
                             )   
 
 
-        eps=-0.00001
+        eps=0
+        #e_d=ca.sqrt(e_x**2+e_y**2)
+        #e_o=e_y()
         m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)
         m12 = 0
         m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d**2+eps)
-        m22 = -((e_x/(e_d+eps))*ca.cos(th)+(e_y/(e_d**2+eps))*ca.sin(th))
+        m22 = -((e_x/(e_d+eps))*ca.cos(th)+(e_y/(e_d+eps))*ca.sin(th))
         
         
         dt=1/self.frequency
@@ -137,7 +139,7 @@ class  NMPC():
                        ca.horzcat(m21,m22))
         E=ca.vertcat(e1, e2)
         k=1
-        kin_eq = [ca.vertcat(ca.mtimes(J, controls)+E)]   
+        kin_eq = [ca.vertcat(ca.mtimes(J, controls)+E,th_d)]   
 
 
         f = ca.Function('f', [states,paremeters, controls], [ca.vcat(kin_eq)], ['state','paremeters', 'control_input'], ['kin_eq'])
@@ -208,15 +210,14 @@ class  NMPC():
         y_d_alg=self.__model.p[4]
 
 
-        self.__ocp.constraints.lbu = np.array([self.min_v])
-        self.__ocp.constraints.ubu = np.array([self.max_v])
-        self.__ocp.constraints.idxbu = np.array([0])
-        self.__ocp.constraints.lsbu = np.zeros(1)
-        self.__ocp.constraints.usbu = np.zeros(1)
-        self.__ocp.constraints.idxsbu = np.array([0])
-        self.__ns_i+=1
-        self.__ns_0+=1
-
+        self.__ocp.constraints.lbu = np.array([self.min_v,self.min_th_d])
+        self.__ocp.constraints.ubu = np.array([self.max_v,self.max_th_d])
+        self.__ocp.constraints.idxbu = np.array([0,1])
+        self.__ocp.constraints.lsbu = np.zeros(2)
+        self.__ocp.constraints.usbu = np.zeros(2)
+        self.__ocp.constraints.idxsbu = np.array([0,1])
+        self.__ns_i+=2
+        self.__ns_0+=2
 
         ex=x_alg-x_d_alg
         ey=y_alg-y_d_alg
@@ -467,7 +468,7 @@ class  NMPC():
         y=x_current[1] 
         th=x_current[2]
         e_d,e_o=self.__e_de_o(x,traj[0,0],y,traj[0,1],th)
-        state = np.array([e_d,e_o])
+        state = np.array([e_d,e_o,th])
         #print(state)
         if not self.__initialized:
             self.__initialize(state)
@@ -533,16 +534,16 @@ class  NMPC():
         Q_e=self.__Q_e
         for i in range(self.__N):
                 
-                self.__solver.set(i, 'yref', np.concatenate((np.zeros((self.__nx)),np.zeros((self.__nu)))))
-
+                self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0,0]),np.zeros((self.__nu)))))
                 self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robots))
+                
                 self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
                 Q = Q - (i / len(traj)) * (Q-self.__Q_e)
           
 
         self.__solver.cost_set(self.__N, 'W', Q_e)
         self.__solver.set(self.__N, 'p', self.__set_params(x,y,th,traj[self.__N-1],vel[self.__N-1],obs,robots))
-        self.__solver.set(self.__N, 'yref', np.zeros((self.__nx)))     
+        self.__solver.set(self.__N, 'yref', np.array([0.1,0.0,0]))     
         
 
         if False:
@@ -560,7 +561,7 @@ class  NMPC():
         ydotd=vel[1]
         
    
-        params=np.array([x,y,th,xd,yd,xdotd,ydotd])
+        params=np.array([x,y,xd,yd,xdotd,ydotd])
         for i in range(len(obs)):
             #params = np.concatenate((params, obs[i]))
             pass

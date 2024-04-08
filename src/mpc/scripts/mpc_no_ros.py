@@ -1,5 +1,5 @@
-#from TNMPC import TNMPC as NMPC
 from TNMPC import NMPC
+#from NMPC  import NMPC
 import numpy as np
 import matplotlib.pyplot as plt
 import time
