@@ -121,9 +121,14 @@ class  NMPC():
                             )   
 
 
-        eps=0
+        eps=0.00001
         #e_d=ca.sqrt(e_x**2+e_y**2)
         #e_o=e_y()
+
+
+        e_d=ca.sqrt(e_x**2+e_y**2+eps)
+        e_o=(e_y*ca.cos(th))/e_d-(e_x*ca.sin(th))/e_d
+
         m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)
         m12 = 0
         m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d**2+eps)
@@ -247,7 +252,7 @@ class  NMPC():
             self.__ns_e+=len(con_h)
       
 
-        if True:
+        if False:
 
             self.__ocp.constraints.lbx = np.array([self.__eo_min])
             self.__ocp.constraints.ubx = np.array([self.__eo_max])
