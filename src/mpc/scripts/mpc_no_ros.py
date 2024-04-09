@@ -1,4 +1,5 @@
-from TNMPC import NMPC
+from ATNMPC import NMPC
+#from TNMPC import NMPC
 #from NMPC  import NMPC
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,9 +16,8 @@ def trajectory(Ts,N):
         
         x=3*np.sin(np.pi*t/25) +5
         y=3*np.cos(np.pi*t/25)+5
-
-        xd=3*np.cos(np.pi*t/25)*np.pi/25
-        yd=-3*np.sin(np.pi*t/25)*np.pi/25
+        xd=3*np.cos(np.pi*t/25)*(np.pi/25)
+        yd=-3*np.sin(np.pi*t/25)*(np.pi/25)
         traj.append([x,y])  
         traj_dot.append([xd,yd])
     return np.asanyarray(traj),np.asanyarray(traj_dot)
@@ -53,8 +53,11 @@ def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,obs,Ts):
         plt.plot(prediction[:,0], prediction[:,1], 'r-', label='Prediction')
         plt.plot(xd[:,0], xd[:,1], 'g-', label='Desired Trajectory')
         plt.plot(x0[0,0], x0[0,1], 'ro', label='Robot Position')  # Red dot for robot position
-        plt.plot(xr[0,0], xr[0,1], 'go', label='Desired Position')  # Red dot for trajectory position
+
+        plt.plot(xr[0,0], xr[0,1], 'go', label='Desired Position')  # Green dot for trajectory position
         for ob in obs:
+            circle = plt.Circle((ob[0], ob[1]), ob[2], color='r', fill=False)
+            plt.gca().add_patch(circle)
             circle = plt.Circle((ob[0], ob[1]), ob[2], color='r', fill=False)
             plt.gca().add_patch(circle) 
         plt.title('Position of robot and trajectory.')
@@ -90,7 +93,7 @@ def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,obs,Ts):
     plt.xlabel('Time')
     plt.ylabel('ed and eo')
     plt.xlim([0, 10])  # Set x-axis limit
-    plt.ylim([-6, 6])  # Set y-axis limit
+    plt.ylim([-10, 10])  # Set y-axis limit
     plt.legend()  # Add legend to the plot
     plt.grid(True)
     plt.tight_layout()

@@ -92,7 +92,7 @@ class  NMPC():
         x = ca.SX.sym('x')
         y = ca.SX.sym('y')
         th = ca.SX.sym('th')
-        th0 = ca.SX.sym('th')
+
         # Desired state parameters
         x_d = ca.SX.sym('x_d')
         y_d = ca.SX.sym('y_d')
@@ -111,7 +111,7 @@ class  NMPC():
         states = ca.vertcat(
                             e_d,
                             e_o,
-)
+ )
         obs=self.__generate_obstacle_params()
         paremeters  = ca.vertcat(x, 
                             y, 
@@ -123,7 +123,7 @@ class  NMPC():
                             )   
 
 
-        eps=0.00001
+        eps=0
         #e_d=ca.sqrt(e_x**2+e_y**2)
         #e_o=e_y()
 
@@ -210,11 +210,7 @@ class  NMPC():
         e_d_alg=self.__model.x[0]
         e_o_alg=self.__model.x[1]
 
-        x_alg  =self.__model.p[0]
-        y_alg  =self.__model.p[1]
-        th_alg =self.__model.p[2]      
-        x_d_alg=self.__model.p[3]
-        y_d_alg=self.__model.p[4]
+  
 
 
         self.__ocp.constraints.lbu = np.array([self.min_v,self.min_th_d])
@@ -226,8 +222,7 @@ class  NMPC():
         self.__ns_i+=2
         self.__ns_0+=2
 
-        ex=x_alg-x_d_alg
-        ey=y_alg-y_d_alg
+
 
   
         if True:
@@ -541,7 +536,8 @@ class  NMPC():
         Q_e=self.__Q_e
         for i in range(self.__N):
                 
-                self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0]),np.zeros((self.__nu)))))
+                #self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0,traj[i,0],traj[i,1],0]),np.zeros((self.__nu)))))
+                self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0]),np.zeros((self.__nu)))))
                 self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robots))
                 
                 self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))

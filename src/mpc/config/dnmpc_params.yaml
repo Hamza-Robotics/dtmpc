@@ -6,7 +6,7 @@ obstacle:  False  #[BOOL]
 Number_obstacles: 1 #[INT]
 print_acados_status: False #[BOOL]
 integrator_type: 'ERK'  #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
-nlp_solver_max_iter: 15 #[INT]
+nlp_solver_max_iter: 35 #[INT]
 cost_type: "LINEAR_LS"
 
 # MPC parameters
@@ -23,17 +23,17 @@ angle_velocity_min: -60. # [degrees/s]
 
 ### Error Distance constraints
 ed_min: 0.1 # [m]
-ed_max: 0.14 # [m]
+ed_max: 100.14 # [m]
 
-ed_min_f: -0.1
+ed_min_f: -0.01
 ed_max_f: 100.02
 ### Error Distance constraints
 
-eo_min: -1.2 # [rad]
-eo_max: 1.2 # [rad]
+eo_min: -100.2 # [rad]
+eo_max: 100.2 # [rad]
 
-eo_min_f: -1.01 # [rad]
-eo_max_f: 1.01 # [rad]
+eo_min_f: -100.01 # [rad]
+eo_max_f: 100.01 # [rad]
 
 
 # Slack variables
@@ -48,8 +48,10 @@ L1_Norm: 1.e+6
 
 #Q_matrix:          [1.e+4,1.e+4,0, 1.e+1,1.e+1]
 #Q_matrix_e:        [1.e+4,1.e+4,0, 1.e+1,1.e+1]
-Q_matrix:          [1.e+5,1.e+5,0]
-Q_matrix_e:        [1.e+5,1.e+5,0]
+#Q_matrix:          [1.e+5,1.e+5,1.e+5,1.e+5,0]
+#Q_matrix_e:        [1.e+5,1.e+5,1.e+5,1.e+5,0
+Q_matrix:          [1.e+5,1.e+5]
+Q_matrix_e:        [1.e+5,1.e+5]
 
 #Q_matrix_waypoint: [0, 0]
 R_matrix:  [1.e-9,1.e-9]
