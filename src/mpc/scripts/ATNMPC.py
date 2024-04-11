@@ -109,13 +109,14 @@ class  NMPC():
         e_o = ca.SX.sym('e_o')
 
         states = ca.vertcat(
+                            x, 
+                            y, 
+                            th,
                             e_d,
                             e_o,
  )
         obs=self.__generate_obstacle_params()
-        paremeters  = ca.vertcat(x, 
-                            y, 
-                            th,
+        paremeters  = ca.vertcat(
                             x_d,
                             y_d,
                             xdot_d,
@@ -146,7 +147,7 @@ class  NMPC():
                        ca.horzcat(m21,m22))
         E=ca.vertcat(e1, e2)
         k=1
-        kin_eq = [ca.vertcat(ca.mtimes(J, controls)+E)]   
+        kin_eq = [ca.vertcat(ca.cos(th)*v,ca.sin(th)*v,th_d,ca.mtimes(J, controls)+E)]   
 
 
         f = ca.Function('f', [states,paremeters, controls], [ca.vcat(kin_eq)], ['state','paremeters', 'control_input'], ['kin_eq'])
@@ -206,10 +207,17 @@ class  NMPC():
         self.__ns_e=0
         self.__ns_0=0
         self.__ns_i=0
+        x_alg=self.__model.x[0]
+        y_alg=self.__model.x[1]
+        th0_alg=self.__model.x[2]
+        e_d_alg=self.__model.x[3]
+        e_o_alg=self.__model.x[4]
+        x_d_alg=self.__model.p[0]
+        y_d_alg=self.__model.p[1]
 
-        e_d_alg=self.__model.x[0]
-        e_o_alg=self.__model.x[1]
-
+        e_x=x_alg-x_d_alg
+        e_y=y_alg-y_d_alg
+        e_d=ca.sqrt(e_x**2+e_y**2+0.0000001)
   
 
 
@@ -225,15 +233,15 @@ class  NMPC():
 
 
   
-        if True:
-            con_h=[e_d_alg**2]
+        if False:
+            con_h=[e_d]
             for i in range(4,self.__numberofobs*3+4,3):
                 #con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2])**2)
                 pass
             con_h_vcat=ca.vcat(con_h)
             self.__ocp.model.con_h_expr =con_h_vcat
-            self.__ocp.constraints.lh =np.array([self.__ed_min**2])
-            self.__ocp.constraints.uh =np.array([self.__ed_max**2])
+            self.__ocp.constraints.lh =np.array([self.__ed_min])
+            self.__ocp.constraints.uh =np.array([self.__ed_max])
             self.__ocp.constraints.lsh = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
             self.__ocp.constraints.ush = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
             self.__ocp.constraints.idxsh = np.array(range(len(con_h)))    # Jsh
@@ -470,7 +478,7 @@ class  NMPC():
         y=x_current[1] 
         th=x_current[2]
         e_d,e_o=self.__e_de_o(x,traj[0,0],y,traj[0,1],th)
-        state = np.array([e_d,e_o])
+        state = np.array([x,y,th,e_d,e_o])
         #print(state)
         if not self.__initialized:
             self.__initialize(state)
@@ -537,7 +545,7 @@ class  NMPC():
         for i in range(self.__N):
                 
                 #self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0,traj[i,0],traj[i,1],0]),np.zeros((self.__nu)))))
-                self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0]),np.zeros((self.__nu)))))
+                self.__solver.set(i, 'yref', np.concatenate((np.array([traj[i,0],traj[i,1],0,0.1,0]),np.zeros((self.__nu)))))
                 self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robots))
                 
                 self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
@@ -546,7 +554,7 @@ class  NMPC():
 
         self.__solver.cost_set(self.__N, 'W', Q_e)
         self.__solver.set(self.__N, 'p', self.__set_params(x,y,th,traj[self.__N-1],vel[self.__N-1],obs,robots))
-        self.__solver.set(self.__N, 'yref', np.array([0.1,0.0]))     
+        self.__solver.set(self.__N, 'yref', np.array([traj[self.__N-1,0],traj[self.__N-1,1],0,0.1,0.0]))     
         
 
         if False:
@@ -564,7 +572,7 @@ class  NMPC():
         ydotd=vel[1]
         
    
-        params=np.array([x,y,th,xd,yd,xdotd,ydotd])
+        params=np.array([xd,yd,xdotd,ydotd])
         for i in range(len(obs)):
             #params = np.concatenate((params, obs[i]))
             pass
