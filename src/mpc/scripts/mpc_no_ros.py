@@ -12,7 +12,7 @@ def trajectory(Ts,N):
     traj_dot=[]
     s=1
     for i in range(0,N):
-        t=(Ts*i+time.time())*s
+        t=(Ts*i+time.time())
         
         x=3*np.sin(np.pi*t/25) +5
         y=3*np.cos(np.pi*t/25)+5
@@ -26,11 +26,11 @@ def propagate(x0,v,thd,Ts):
     x=x0[0,0]
     y=x0[0,1]
     th=x0[0,2]
-    theta=th+thd*Ts
 
+    theta=th+thd*Ts
     x=x+v*np.cos(theta)*Ts
     y=y+v*np.sin(theta)*Ts
-    
+
     return np.array([[x,y,theta]])
 
 def prediction(x0,u):
@@ -86,7 +86,6 @@ def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,obs,Ts):
         plt.ylim([-10, 10])  # Set y-axis limit
         plt.legend()  # Add legend to the plot
         plt.grid(True)  
-    print(Ts)
     plt.subplot(2, 2, 2)  # Second subplot for y position
     plt.plot(np.arange(0, len(ed)*Ts, Ts), ed, 'g-', label='ed')
     plt.plot(np.arange(0, len(eo)*Ts, Ts), eo, 'r-', label='eo')

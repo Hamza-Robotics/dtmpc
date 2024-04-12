@@ -96,6 +96,7 @@ class  NMPC():
         # Desired state parameters
         x_d = ca.SX.sym('x_d')
         y_d = ca.SX.sym('y_d')
+        th_0 = ca.SX.sym('th0')
         # Desired velocity parameters
         xdot_d = ca.SX.sym('xdot_d')
         ydot_d = ca.SX.sym('ydot_d')
@@ -117,6 +118,7 @@ class  NMPC():
  )
         obs=self.__generate_obstacle_params()
         paremeters  = ca.vertcat(
+                            th_0,
                             x_d,
                             y_d,
                             xdot_d,
@@ -124,13 +126,13 @@ class  NMPC():
                             )   
 
 
-        eps=0
+        eps=0.000001
         #e_d=ca.sqrt(e_x**2+e_y**2)
         #e_o=e_y()
 
 
-        #e_d=ca.sqrt(e_x**2+e_y**2+eps)
-        #e_o=(e_y*ca.cos(th))/e_d-(e_x*ca.sin(th))/e_d
+        e_d=ca.sqrt(e_x**2+e_y**2+eps)
+        e_o=((e_y/(e_d+eps))*ca.cos(th))-((e_x/(e_d+eps))*ca.sin(th))
 
         m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)
         m12 = 0
@@ -139,9 +141,9 @@ class  NMPC():
         
         
         dt=1/self.frequency
-        dt=1
+        #dt=1
         e1 = -((e_x*xdot_d*dt+e_y*ydot_d*dt)/(e_d+eps))
-        e2 = (e_o*(xdot_d*dt*e_x+ydot_d*dt*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/(e_d**2+eps)
+        e2 = (e_o*(xdot_d*dt*e_x+ydot_d*dt*e_y)+0*e_d*(ca.sin(th)-ca.cos(th)))/(e_d**2+eps)
         
         J = ca.vertcat(ca.horzcat(m11,m12),
                        ca.horzcat(m21,m22))
@@ -528,6 +530,9 @@ class  NMPC():
 
             pass
         self.__initialized=False 
+
+        print("state;",np.array([x,y,np.rad2deg(th),e_d,e_o]))
+        print("control;",np.array([u_list[0][0],np.rad2deg(u_list[0][1])]))
         return self.u_list, self.x_list
     
     def __initialize(self,state):
@@ -572,7 +577,7 @@ class  NMPC():
         ydotd=vel[1]
         
    
-        params=np.array([xd,yd,xdotd,ydotd])
+        params=np.array([th,xd,yd,xdotd,ydotd])
         for i in range(len(obs)):
             #params = np.concatenate((params, obs[i]))
             pass
