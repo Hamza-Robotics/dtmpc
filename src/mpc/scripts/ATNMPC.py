@@ -141,9 +141,9 @@ class  NMPC():
         
         
         dt=1/self.frequency
-        #dt=1
+        dt=1
         e1 = -((e_x*xdot_d*dt+e_y*ydot_d*dt)/(e_d+eps))
-        e2 = (e_o*(xdot_d*dt*e_x+ydot_d*dt*e_y)+0*e_d*(ca.sin(th)-ca.cos(th)))/(e_d**2+eps)
+        e2 = (e_o*(xdot_d*dt*e_x+ydot_d*dt*e_y)-0*e_d*(ca.sin(th)-ca.cos(th)))/(e_d**2+eps)
         
         J = ca.vertcat(ca.horzcat(m11,m12),
                        ca.horzcat(m21,m22))
@@ -473,7 +473,6 @@ class  NMPC():
         return e_d,e_o   
     
     def controller(self,x,traj,vel,obs,robots=None):
-        
         
         x_current = x[0]
         x=x_current[0] 

@@ -47,12 +47,12 @@ def update_plot(x0, xd, prediction,solution,ed_serie,eo_serie,obs,Ts):
     eo=solution[:,4]
     xp = solution[:,0]
     yp = solution[:,1]
-    use_prediction = False  # Set to True if you want to plot the prediction instead of the solution
+    use_prediction = True  # Set to True if you want to plot the prediction instead of the solution
     plt.clf()  # Clear the previous plot
     if use_prediction:
         plt.subplot(2, 2, 1)  # First subplot for x position
         plt.plot(prediction[:,0], prediction[:,1], 'r-', label='Prediction')
-        plt.plot(xd[:,0], xd[:,1], 'g-', label='Desired Trajectory')
+        #plt.plot(xd[:,0], xd[:,1], 'g-', label='Desired Trajectory')
         plt.plot(x0[0,0], x0[0,1], 'ro', label='Robot Position')  # Red dot for robot position
 
         plt.plot(xr[0,0], xr[0,1], 'go', label='Desired Position')  # Green dot for trajectory position
