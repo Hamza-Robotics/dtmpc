@@ -152,7 +152,7 @@ control_hz = 10
 control_period = 1 / control_hz
 start_time = time.time()
 
-obs=[[2,6,1.1]]
+obs=[[2,6,0.5]]
 
 xr, xd = trajectory(Ts,MPC.N)  # Assuming trajectory() returns x values
 # Define the initial state

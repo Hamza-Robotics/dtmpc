@@ -6,24 +6,24 @@ obstacle:  False  #[BOOL]
 Number_obstacles: 1 #[INT]
 print_acados_status: False #[BOOL]
 integrator_type: 'ERK'  #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
-nlp_solver_max_iter: 15 #[INT]
+nlp_solver_max_iter: 25 #[INT]
 cost_type: "LINEAR_LS"
 
 # MPC parameters
 Update_Frequency: 1 #¤[Hz]
 Prediction_Frequency: 10 #[hz]
-Prediction_Length: 10 #[s]
+Prediction_Length: 5 #[s]
 
 ### Input constraints 
-velocity_max: 1.5 #  [m/s]
-velocity_min: -1.5 # [m/s]
-angle_velocity_max: 30.  # [degrees/s]
-angle_velocity_min: -30. # [degrees/s]
+velocity_max: 3.5 #  [m/s]
+velocity_min: -3.5 # [m/s]
+angle_velocity_max: 70.  # [degrees/s]
+angle_velocity_min: -70. # [degrees/s]
 
 
 ### Error Distance constraints
 ed_min: 0.1 # [m]
-ed_max: 100.14 # [m]
+ed_max: 100.44 # [m]
 
 ed_min_f: 0.1
 ed_max_f: 100.02
@@ -50,8 +50,9 @@ L1_Norm: 1.e+6
 #Q_matrix_e:        [1.e+4,1.e+4,0, 0,0]
 #Q_matrix:          [1.e+3,1.e+3,0,0,0]
 #Q_matrix_e:        [1.e+3,1.e+3,0,0,0]
-Q_matrix:          [0,0,0,1.e+1,1.e+1]
-Q_matrix_e:        [0,0,0,1.e+1,1.e+1]
+Q_matrix_0:          [0,0,0,1.e-1,1.e-1]
+Q_matrix_i:          [0,0,0,1.e+5,1.e+5]
+Q_matrix_e:          [0,0,0,1.e-1,1.e-1]
 
 #Q_matrix_waypoint: [0, 0]
-R_matrix:  [1.e-1,1.e-1]
+R_matrix:  [1.e-9,1.e-9]
