@@ -46,6 +46,12 @@ def generate_launch_description():
     )
 
 
+
+    trajectory = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([os.path.join(
+                    get_package_share_directory("trajectory_generator"),'launch','trajectory.launch.py'
+                )])
+    )
     rvizfile=os.path.join(pkg_path,'config','rvizconfig.rviz')
 
     node_rviz2= Node(
@@ -64,5 +70,6 @@ def generate_launch_description():
         robot2,
         robot3,
         node_rviz2,
-        obstacle_node
+        obstacle_node,
+        trajectory
     ])

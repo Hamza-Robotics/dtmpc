@@ -9,6 +9,7 @@ from geometry_msgs.msg import PointStamped, PoseStamped, Vector3
 from dtmpc_interface.msg import Trajectory
 from nav_msgs.msg import Path
 import time
+import sympy as sp
 class MinimalPublisher(Node):
 
     def __init__(self):
@@ -20,11 +21,11 @@ class MinimalPublisher(Node):
         self.publisher_ = self.create_publisher(PointStamped, 'trajectory/point', 10)
         self.publisher_path = self.create_publisher(Path, 'trajectory/viz', 10)
         self.publisher_trajectory = self.create_publisher(Trajectory, 'trajectory/profile', 10)
-
+        self.x,self.y,self.xd,self.yd=self.trajectory_robot1()
         with open('src/mpc/config/dnmpc_params.yaml') as file:
             yamlfile = yaml.safe_load(file)
         frequency=yamlfile['Prediction_Frequency']
-        prediction_Length=yamlfile['Prediction_Length']
+        prediction_Length=30
         self.N=int(prediction_Length*frequency)
         self.samplingtime=1/frequency
     def timer_callback(self):
@@ -63,11 +64,29 @@ class MinimalPublisher(Node):
         
         self.publisher_path.publish(path)
         self.publisher_trajectory.publish(trajectory)
+    
+    
     def trJ(self,t):
-        x=3*np.sin(np.pi*t/25)
-        y=3*np.cos(np.pi*t/25)
-        xd=3*np.cos(np.pi*t/25)*(np.pi/25)
-        yd=-3*np.sin(np.pi*t/25)*(np.pi/25)
+        x=self.x(t)
+        y=self.y(t)
+        xd=self.xd(t)
+        yd=self.yd(t)
+        return x,y,xd,yd    
+    
+    def trajectory_robot1(self):  
+        
+        t=sp.symbols('t')    
+        x=3*sp.sin(sp.pi*t/25)
+        y=3*sp.cos(sp.pi*t/25)
+        xd=3*sp.cos(sp.pi*t/25)*(sp.pi/25)
+        yd=-3*sp.sin(sp.pi*t/25)*(sp.pi/25)
+        
+        x = sp.lambdify(t, x)
+        y = sp.lambdify(t, y)
+        xd = sp.lambdify(t, xd)
+        yd = sp.lambdify(t, yd)
+        
+
         return x,y ,xd,yd
 def main(args=None):
     rclpy.init(args=args)

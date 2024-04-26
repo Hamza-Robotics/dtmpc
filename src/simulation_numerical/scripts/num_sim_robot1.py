@@ -16,7 +16,7 @@ class Robot():
         self.v=0.0
         self.th_d=0.0
 
-        self.hz=10
+        self.hz=50
 
     def propagate(self,v,th_d,hz):
         self.th0=self.th0+(th_d)*(1/(hz))

@@ -10,7 +10,7 @@ class obstacle_node(Node):
 
     def __init__(self):
         super().__init__('obstacle_node')
-        self.publisher_ = self.create_publisher(MarkerArray, 'marker_array', 10)
+        self.publisher_ = self.create_publisher(MarkerArray, 'dtmpc/obstacle_list', 10)
         timer_period = 0.1  # seconds
         self.subscription1 = self.create_subscription(Twist, 'dtmpc/obstacle/propagate_obstacle1', self.twist_obs1, 10)
         self.subscription2 = self.create_subscription(Twist, 'dtmpc/obstacle/propagate_obstacle2', self.twist_obs2, 10)
@@ -21,7 +21,7 @@ class obstacle_node(Node):
 
         self.i = 0
         self.hz=10
-        self.obstacle1=np.array([1.0,1.0,0.5])
+        self.obstacle1=np.array([0.0,3.0,0.5])
         self.obstacle1_xd=np.array([0,0])
         self.obstacle2=np.array([10.0,2.0,0.5])
         self.obstacle2_xd=np.array([0,0])
@@ -57,7 +57,6 @@ class obstacle_node(Node):
         msg.markers.append(self.marker_maker(self.obstacle2[0], self.obstacle2[1], self.obstacle2[2], 1))
         msg.markers.append(self.marker_maker(self.obstacle3[0], self.obstacle3[1], self.obstacle3[2], 2))
         self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.markers)
 
     def twist_obs1(self,msg):
         self.obstacle1_xd=np.array([msg.linear.x,msg.angular.z])

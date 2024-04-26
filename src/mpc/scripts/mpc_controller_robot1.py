@@ -29,7 +29,7 @@ class Mpc_Controller(Node):
         self.publisher_twist = self.create_publisher(Twist, 'robot1/cmd_vel', 10)
         self.solution_u = self.create_publisher(Float64MultiArray, "dtmpc/robot1/u_solution", 10)
         self.subscription_trajectory = self.create_subscription(Trajectory, 'trajectory/profile', self.trajectory_callback, 10)
-        self.subscription_obstacle = self.create_subscription(MarkerArray,'marker_array',self.obstacle_extractor,10)
+        self.subscription_obstacle = self.create_subscription(MarkerArray,'dtmpc/obstacle_list',self.obstacle_extractor,10)
         self.x=np.array([10,10,0]).reshape(1,3)
         self.x_received=False
         self.traj_received=False
@@ -86,6 +86,7 @@ class Mpc_Controller(Node):
         self.traj=path2numpy(msg.path)
         #self._logger.info(f"Trajectory dimensions: {np.shape(traj)}")
         self.traj_received=True
+    
     def state_callback(self,msg):
         rpy=quaternion_to_euler(msg.pose.orientation)
         self.x=np.array([msg.pose.position.x,msg.pose.position.y,rpy[2]]).reshape(1,3)
@@ -98,7 +99,7 @@ class Mpc_Controller(Node):
         obstacles=[]
         for marker in msg:
             #print(f"x: {marker.pose.position.x}, y: {marker.pose.position.y}, radius: {marker.scale.x}")
-            obstacles.append([marker.pose.position.x,marker.pose.position.y,0.5])
+            obstacles.append([marker.pose.position.x,marker.pose.position.y,marker.scale.x])
             
         # Sort obstacles based on their distance from the current position
         sorted_obstacles = sorted(obstacles, key=lambda obs: np.linalg.norm(obs[:2] - self.x[0, :2]))
