@@ -26,9 +26,10 @@ scripts/mobile_robot_model.py
 scripts/mpc_controller_robot1.py
 scripts/NMPC.py
 scripts/TNMPC.py
+scripts/ATNMPC.py
 scripts/conversion_functions.py
 scripts/solution_plotter.py
-
+scripts/mpc_in_ros.py
 DESTINATION lib/${PROJECT_NAME}
 )
 

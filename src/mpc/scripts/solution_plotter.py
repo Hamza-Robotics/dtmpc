@@ -19,7 +19,7 @@ class MinimalSubscriber(Node):
         self.x=np.array([0,0,0]).reshape(1,3)
 
         self.solution_pub= self.create_publisher(Path, "dtmpc/robot1/solution", 10)
-        with open('src/mpc/config/mpc_params.yaml') as file:
+        with open('src/mpc/config/dnmpc_params.yaml') as file:
             yamlfile = yaml.safe_load(file)
         frequency=yamlfile['Prediction_Frequency']
         self.samplingtime=1/frequency

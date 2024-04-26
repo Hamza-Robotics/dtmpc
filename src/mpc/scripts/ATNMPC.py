@@ -16,7 +16,9 @@ class  NMPC():
         self.frequency=yamlfile['Prediction_Frequency']
         self.__prediction_length = yamlfile['Prediction_Length']
         self.update_frequency=yamlfile['Update_Frequency']
-        self.__robot_model=self.__define_model()
+        self.obstacle_used=yamlfile['obstacle']
+        self.numberofobs=yamlfile['Number_obstacles']
+        self.__robot_model=self.__define_model(self.obstacle_used,yamlfile['Number_obstacles'])
         self.__initialized=False
 
         self.__Tf = self.__prediction_length
@@ -63,7 +65,7 @@ class  NMPC():
         self.__eo_f_min=yamlfile['eo_min_f']
         self.__ed_f_min=yamlfile['ed_min_f']
 
-        self.__obstacle=yamlfile['obstacle']
+        self.obstacle_used=yamlfile['obstacle']
         self.__numberofobs=yamlfile['Number_obstacles']
 
 
@@ -71,15 +73,15 @@ class  NMPC():
         self.__constraints()
         self.__solver_compiler()
     
-    def __generate_obstacle_params(self):
+    def __generate_obstacle_params(self,number_obs):
         obs=[]
-        for i in range(1):
+        for i in range(number_obs):
             obs_temp=np.array([ca.SX.sym('x'+str(i)+'_obs'),ca.SX.sym('y'+str(i)+'_obs'),ca.SX.sym('r'+str(i)+'_obs')]).reshape(-1,1)            
             obs.append(obs_temp)
         print("hehehehe",obs)
         return ca.vertcat(*obs)
     
-    def __define_model(self):
+    def __define_model(self,obstacle_used,number_obs):
         model=AcadosModel()
         # control inputs
         v = ca.SX.sym('v')
@@ -116,22 +118,32 @@ class  NMPC():
                             theta,
                             e_d,
                             e_o,
- )
-        obs=self.__generate_obstacle_params()
-        paremeters  = ca.vertcat(
-                            x_d,
-                            y_d,
-                            xd_dot,
-                            yd_dot,
-                            obs
-                            )   
+ )      
+        
+        if obstacle_used:
+            obs=self.__generate_obstacle_params(number_obs)
+            paremeters  = ca.vertcat(
+                    x_d,
+                    y_d,
+                    xd_dot,
+                    yd_dot,
+                    obs
+                    )   
+        else:
+            paremeters  = ca.vertcat(
+                        x_d,
+                        y_d,
+                        xd_dot,
+                        yd_dot,
+                        )   
+  
 
         ed=ca.sqrt(e_x**2+e_y**2+0.0000001)
         eo=(e_y*ca.cos(theta)-e_x*ca.sin(theta))/e_d
         
         x_dot=ca.cos(theta)*v
         y_dot=ca.sin(theta)*v
-        thneta_dot=theta_dot
+        #theta_dot=theta_dot
         ed_dot=((x_dot - xd_dot)*e_x + (y_dot - yd_dot)*e_y)/ed
         eo_dot=(((x_dot - xd_dot)*e_x + (y_dot - yd_dot)*e_y)*(e_x*ca.cos(theta) - e_y*ca.sin(theta)) + ((-x_dot + xd_dot)*ca.cos(theta) + (y_dot - yd_dot)*ca.sin(theta) + e_x*theta_dot*ca.sin(theta) + e_y*theta_dot*ca.cos(theta))*ed**2)/ed**3
         
@@ -210,7 +222,7 @@ class  NMPC():
 
         e_x=x_alg-x_d_alg
         e_y=y_alg-y_d_alg
-        e_d=ca.sqrt(e_x**2+e_y**2+0.0000001)
+        e_d=ca.sqrt(e_x**2+e_y**2+0.01)
   
 
 
@@ -225,9 +237,9 @@ class  NMPC():
 
 
 
-  
         if True:
             con_h=[e_d]
+        if self.obstacle_used:
             for i in range(4,self.__numberofobs*3+4,3):
                 con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2])**2)
             
@@ -241,8 +253,8 @@ class  NMPC():
             self.__ns_i+=len(con_h)
 
             self.__ocp.model.con_h_expr_e =con_h_vcat
-            self.__ocp.constraints.lh_e =np.array([self.__ed_min**2] + [0]*self.__numberofobs)
-            self.__ocp.constraints.uh_e =np.array([self.__ed_max**2] + [100]*self.__numberofobs)
+            self.__ocp.constraints.lh_e =np.array([self.__ed_min] + [0]*self.__numberofobs)
+            self.__ocp.constraints.uh_e =np.array([self.__ed_max] + [100]*self.__numberofobs)
             self.__ocp.constraints.lsh_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
             self.__ocp.constraints.ush_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
             self.__ocp.constraints.idxsh_e = np.array(range(len(con_h)))    # Jsh
@@ -523,12 +535,10 @@ class  NMPC():
             pass
         self.__initialized=False 
 
-        print("state;",np.array([x,y,np.rad2deg(th),e_d,e_o]))
-        print("control;",np.array([u_list[0][0],np.rad2deg(u_list[0][1])]))
-        k=x_list[0]
-        k[0]
+        #print("state;",np.array([x,y,np.rad2deg(th),e_d,e_o]))
+        #print("control;",np.array([u_list[0][0],np.rad2deg(u_list[0][1])]))
+  
 
-        print(traj[0])
         self.__tube(u_list[0],x_list[0],traj[0],vel[0])
         return self.u_list, self.x_list
     
@@ -569,7 +579,7 @@ class  NMPC():
         e_bar=np.array([ed_st+ed_dot_bar*(1/self.frequency),eo_st+eo_dot_bar*(1/self.frequency)])
         e=    np.array([ed_st+ed_dot*(1/self.frequency),eo_st+eo_dot*(1/self.frequency)])
         
-        print("e_bar",e_bar)
+        #print("e_bar",e_bar)
         k1=0.5
         k2=0.5
         return control[0]+k1*(e[0]-e_bar[0]) , control[1]+k2*(e[1]-e_bar[1])
@@ -619,9 +629,10 @@ class  NMPC():
         
    
         params=np.array([xd,yd,xdotd,ydotd])
-        for i in range(len(obs)):
-            params = np.concatenate((params, obs[i]))
-            pass
+        if self.obstacle_used:
+            for i in range(self.numberofobs):
+                params = np.concatenate((params, obs[i]))
+                  
         return params
     
     def simulator(self,x,u):

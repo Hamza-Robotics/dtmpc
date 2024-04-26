@@ -29,7 +29,7 @@ def numpy2path(self,traj):
         pose.pose.position.y = traj[i,1]
 
         pose.pose.orientation= \
-        euler_to_quaternion(0, 0, traj[i,2])
+        euler_to_quaternion(0, 0, 0)
         pose.header.frame_id="map"
         pose.header.stamp=self.get_clock().now().to_msg()
         path.poses.append(pose)

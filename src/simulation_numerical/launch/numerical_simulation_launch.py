@@ -54,11 +54,15 @@ def generate_launch_description():
         arguments=['-d', rvizfile]
     )
   
-    
+    obstacle_node= Node(
+    package='simulation_numerical',
+    executable='obstacle.py'
+) 
     
     return LaunchDescription([
         robot1,
-        #robot2,
-        #robot3,
-        node_rviz2
+        robot2,
+        robot3,
+        node_rviz2,
+        obstacle_node
     ])

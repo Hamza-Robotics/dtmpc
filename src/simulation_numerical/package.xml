@@ -8,7 +8,9 @@
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-
+<build_depend>xacro</build_depend> <!-- Added xacro as a build dependency -->
+<build_depend>urdf</build_depend> <!-- Added xacro as a build dependency -->
+<build_depend>turtlebot3_gazebo</build_depend> <!-- Added turtlebot3_gazebo as a build dependency -->
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

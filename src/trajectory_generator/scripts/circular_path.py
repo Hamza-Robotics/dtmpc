@@ -8,6 +8,7 @@ import yaml
 from geometry_msgs.msg import PointStamped, PoseStamped, Vector3
 from dtmpc_interface.msg import Trajectory
 from nav_msgs.msg import Path
+import time
 class MinimalPublisher(Node):
 
     def __init__(self):
@@ -27,40 +28,34 @@ class MinimalPublisher(Node):
         self.N=int(prediction_Length*frequency)
         self.samplingtime=1/frequency
     def timer_callback(self):
-        t = (self.get_clock().now() - self.begin_time).nanoseconds / 1e9
-        x,y=self.trJ(t)
+        t = time.time()
+        x,y,xd,yd=self.trJ(t)
         point_msg = PointStamped()
         point_msg.header.stamp = self.get_clock().now().to_msg()
         point_msg.header.frame_id = 'map'
         point_msg.point.x = x
         point_msg.point.y = y        
-        point_msg.point.x = 2.0
-        point_msg.point.y = 2.0
+
         self.publisher_.publish(point_msg)
         path=Path()
         path.header.stamp = self.get_clock().now().to_msg() 
         trajectory=Trajectory()
-        velocities = []
+        velocities = Path()
 
         path.header.frame_id = 'map'
         for i in range(0,self.N):
             point_msg = PoseStamped()
-            x,y=self.trJ(t+i*self.samplingtime)
+            vel_msg = PoseStamped()
+            x,y,yd,xd=self.trJ(t+i*self.samplingtime)
             point_msg.pose.position.x=x
             point_msg.pose.position.y=y
 
-            vel=Vector3()
-            vel.x= 3*np.cos(np.pi*(t+i*self.samplingtime)/25)*np.pi/25
-            vel.y=-3*np.sin(np.pi*(t+i*self.samplingtime)/25)*np.pi/25            
-            point_msg.pose.position.x=2.0
-            point_msg.pose.position.y=2.0
-
-            vel=Vector3()
-            vel.x= 0.0
-            vel.y= 0.0
+            vel_msg.pose.position.x=xd
+            vel_msg.pose.position.y=yd
             
-            velocities.append(vel)
 
+  
+            velocities.poses.append(vel_msg)
             path.poses.append(point_msg)
 
         trajectory.path=path
@@ -71,7 +66,9 @@ class MinimalPublisher(Node):
     def trJ(self,t):
         x=3*np.sin(np.pi*t/25)
         y=3*np.cos(np.pi*t/25)
-        return x,y
+        xd=3*np.cos(np.pi*t/25)*(np.pi/25)
+        yd=-3*np.sin(np.pi*t/25)*(np.pi/25)
+        return x,y ,xd,yd
 def main(args=None):
     rclpy.init(args=args)
 

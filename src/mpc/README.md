@@ -37,9 +37,8 @@ source setup_acados.sh
 
 #### 5. check if the installation is correct.
 ```bash
-cd ~/dtmpc/src/mpc/acados
-python3 examples/acados_python/getting_started/minimal_example_ocp.py 
 cd ~/dtmpc
+python3 src/mpc/acados/examples/acados_python/getting_started/minimal_example_ocp.py 
 ```
 If you a graph with states and control input over time to reach a set point then it works. 
 
