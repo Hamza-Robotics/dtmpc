@@ -3,7 +3,7 @@ from math import sin, cos, pi
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
-from geometry_msgs.msg import Quaternion, Twist
+from geometry_msgs.msg import Quaternion, Twist, PoseStamped
 from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster, TransformStamped
 class StatePublisher(Node):
@@ -11,7 +11,7 @@ class StatePublisher(Node):
     def __init__(self):
         self.robot_name="robot3"
         self.x=1.0
-        self.y=0.00
+        self.y=3.00
         self.th0=0.0
         self.hz=20
         self.linear_x=0
@@ -22,9 +22,9 @@ class StatePublisher(Node):
 
         qos_profile = QoSProfile(depth=10)
         self.joint_pub = self.create_publisher(JointState, self.robot_name+'/joint_states', qos_profile)
-        self.publish_state = self.create_publisher(TransformStamped, self.robot_name+'/pose', qos_profile)
+        self.publish_transforms = self.create_publisher(TransformStamped, self.robot_name+'/transformed_stamped', qos_profile)
         self.broadcaster = TransformBroadcaster(self, qos=qos_profile)
-        
+        self.publish_state= self.create_publisher(PoseStamped, self.robot_name+'/pose', qos_profile)
         self.subscription = self.create_subscription(Twist,self.robot_name+'/cmd_vel',self.integrator,10)
         self.subscription  # prevent unused variable warning
 
@@ -64,10 +64,19 @@ class StatePublisher(Node):
         self.odom_trans.transform.translation.z = 0.0
         self.odom_trans.transform.rotation = \
             euler_to_quaternion(0, 0, self.th0) # roll,pitch,yaw
-
+        pose = PoseStamped()
+        pose.header.stamp = now.to_msg()
+        pose.header.frame_id = 'map'
+        pose.pose.position.x = self.x
+        pose.pose.position.y = self.y
+        pose.pose.position.z = 0.0
+        pose.pose.orientation = euler_to_quaternion(0, 0, self.th0)
+        
+        self.publish_state.publish(pose)
+        
         # send the joint state and transform
         self.joint_pub.publish(self.joint_state)
-        self.publish_state.publish(self.odom_trans)
+        self.publish_transforms.publish(self.odom_trans)
         self.broadcaster.sendTransform(self.odom_trans)
 
 

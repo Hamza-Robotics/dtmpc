@@ -9,7 +9,7 @@ import os
 
 class  NMPC():
 
-    def __init__(self):
+    def __init__(self,robot_name):
         with open('src/mpc/config/dnmpc_params.yaml') as file:
             yamlfile = yaml.safe_load(file)
         self.__QP_solver = yamlfile['QP_solver']
@@ -18,9 +18,9 @@ class  NMPC():
         self.update_frequency=yamlfile['Update_Frequency']
         self.obstacle_used=yamlfile['obstacle']
         self.numberofobs=yamlfile['Number_obstacles']
-        self.__robot_model=self.__define_model(self.obstacle_used,yamlfile['Number_obstacles'])
+        self.__robot_model=self.__define_model(robot_name,self.obstacle_used,yamlfile['Number_obstacles'])
         self.__initialized=False
-
+    
         self.__Tf = self.__prediction_length
         self.__N=int(self.__prediction_length*self.frequency)
         self.N=self.__N 
@@ -81,7 +81,7 @@ class  NMPC():
         print("hehehehe",obs)
         return ca.vertcat(*obs)
     
-    def __define_model(self,obstacle_used,number_obs):
+    def __define_model(self,robot_name,obstacle_used,number_obs):
         model=AcadosModel()
         # control inputs
         v = ca.SX.sym('v')
@@ -164,7 +164,7 @@ class  NMPC():
         model.xdot = x_dot
         model.u = controls
         model.p=paremeters
-        model.name = 'mobile_robot'
+        model.name = robot_name
         return model
     
     def __linear_cost_function(self):

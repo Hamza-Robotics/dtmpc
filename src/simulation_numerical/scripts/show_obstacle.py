@@ -17,8 +17,8 @@ class MinimalSubscriber(Node):
     def listener_callback(self, msg):
         msg = msg.markers
         for marker in msg:
-            print(f"x: {marker.pose.position.x}, y: {marker.pose.position.y}, radius: {marker.scale.x}")
-        
+            #print(f"x: {marker.pose.position.x}, y: {marker.pose.position.y}, radius: {marker.scale.x}")
+            pass
 
 
 def main(args=None):

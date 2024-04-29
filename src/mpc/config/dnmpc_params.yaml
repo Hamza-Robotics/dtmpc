@@ -3,10 +3,10 @@ QP_solver: 'PARTIAL_CONDENSING_HPIPM'
 nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
 obstacle:  True  #[BOOL]
-Number_obstacles: 1 #[INT]
+Number_obstacles: 3 #[INT]
 print_acados_status: False #[BOOL]
 integrator_type: 'ERK'  #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
-nlp_solver_max_iter: 35 #[INT]
+nlp_solver_max_iter: 5 #[INT]
 cost_type: "LINEAR_LS"
 
 # MPC parameters
@@ -46,13 +46,13 @@ L1_Norm: 1.e+6
 #Q_matrix_waypoint: [1.e-5,1.e-5, 0,0,0]
 #Q_matrix:          [1.e-5, 1.e-5,0,0,0,]
 
-#Q_matrix:          [1.e+4,1.e+4,0,0,0]
-#Q_matrix_e:        [1.e+4,1.e+4,0, 0,0]
-#Q_matrix:          [1.e+3,1.e+3,0,0,0]
-#Q_matrix_e:        [1.e+3,1.e+3,0,0,0]
-Q_matrix_0:          [0,0,0,1.e+4,1.e+4]
-Q_matrix_i:          [0,0,0,1.e+4,1.e+0]
-Q_matrix_e:          [0,0,0,1.e+4,1.e+0]
+#Q_matrix:            [1.e+4,1.e+4,0,0,0]
+Q_matrix_0:           [1.e+4,1.e+4,0, 0,0]
+Q_matrix_i:           [1.e+3,1.e+3,0,0,0]
+Q_matrix_e:           [1.e+3,1.e+3,0,0,0]
+#Q_matrix_0:          [0,0,0,1.e+4,1.e+4]
+#Q_matrix_i:          [0,0,0,1.e+4,1.e+0]
+#Q_matrix_e:          [0,0,0,1.e+4,1.e+0]
 
 #Q_matrix_waypoint: [0, 0]
 R_matrix:  [1.e-9,1.e-9]

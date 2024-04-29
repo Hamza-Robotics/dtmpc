@@ -71,5 +71,4 @@ def generate_launch_description():
         robot3,
         node_rviz2,
         obstacle_node,
-        trajectory
     ])

@@ -37,11 +37,6 @@ rosdep install --from-paths src -y --ignore-src
 colcon build && source install/setup.bash
 ros2 launch simulation_numerical numerical_simulation_launch.py 
 ```
-```bash
-colcon build && source install/setup.bash
-ros2 launch trajectory_generator trajectory.launch.py 
-```
-
 
 
 ```bash

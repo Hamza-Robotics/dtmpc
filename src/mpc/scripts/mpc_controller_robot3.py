@@ -16,7 +16,7 @@ from dtmpc_interface.msg import Trajectory
 import matplotlib.pyplot as plt
 from robot_system import get_trajectory 
 from std_msgs.msg import Float64MultiArray
-robot= 'robot1'
+robot= 'robot3'
 class Mpc_Controller(Node):
     def __init__(self):
         super().__init__('mpccontroller'+robot)

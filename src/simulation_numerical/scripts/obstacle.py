@@ -23,9 +23,9 @@ class obstacle_node(Node):
         self.hz=10
         self.obstacle1=np.array([0.0,3.0,0.5])
         self.obstacle1_xd=np.array([0,0])
-        self.obstacle2=np.array([10.0,2.0,0.5])
+        self.obstacle2=np.array([-2.0,2.0,0.5])
         self.obstacle2_xd=np.array([0,0])
-        self.obstacle3=np.array([10.0,3.0,0.4])
+        self.obstacle3=np.array([0.0,2.0,0.4])
         self.obstacle3_xd=np.array([0,0])
 
         
