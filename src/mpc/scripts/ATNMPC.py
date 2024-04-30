@@ -18,9 +18,10 @@ class  NMPC():
         self.update_frequency=yamlfile['Update_Frequency']
         self.obstacle_used=yamlfile['obstacle']
         self.numberofobs=yamlfile['Number_obstacles']
-        self.__robot_model=self.__define_model(robot_name,self.obstacle_used,yamlfile['Number_obstacles'])
+        self.__robot_model=self.__define_model(robot_name,self.obstacle_used,yamlfile['Number_obstacles']+yamlfile['Number_Robots']-1)
         self.__initialized=False
-    
+        self.__number_of_robots=yamlfile['Number_Robots']
+        self._robot_radius=yamlfile['robot_radius']
         self.__Tf = self.__prediction_length
         self.__N=int(self.__prediction_length*self.frequency)
         self.N=self.__N 
@@ -36,7 +37,6 @@ class  NMPC():
         self.min_v=yamlfile['velocity_min']
         self.max_th_d=np.deg2rad(yamlfile['angle_velocity_max'])
         self.min_th_d=np.deg2rad(yamlfile['angle_velocity_min'])
-
 
 
         self.prediction_length=self.__prediction_length
@@ -241,9 +241,19 @@ class  NMPC():
             con_h=[e_d]
         if self.obstacle_used:
             for i in range(4,self.__numberofobs*3+4,3):
-                con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2])**2)
+                con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2]/2+0.2)**2)
             
             con_h_vcat=ca.vcat(con_h)
+ 
+ 
+            self.__ocp.model.con_h_expr_0 =con_h_vcat
+            self.__ocp.constraints.lh_0 =np.array([self.__ed_min] + [0]*self.__numberofobs)
+            self.__ocp.constraints.uh_0 =np.array([self.__ed_max] + [100]*self.__numberofobs)
+            self.__ocp.constraints.lsh_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+            self.__ocp.constraints.ush_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+            self.__ocp.constraints.idxsh_0 = np.array(range(len(con_h)))    # Jsh
+            self.__ns_0+=len(con_h)
+            
             self.__ocp.model.con_h_expr =con_h_vcat
             self.__ocp.constraints.lh =np.array([self.__ed_min] + [0]*self.__numberofobs)
             self.__ocp.constraints.uh =np.array([self.__ed_max] + [100]*self.__numberofobs)
@@ -474,7 +484,7 @@ class  NMPC():
         e_o=(e_y*np.cos(th))/e_d-(e_x*np.sin(th))/e_d
         return e_d,e_o   
     
-    def controller(self,x,traj,vel,obs,robots=None):
+    def controller(self,x,traj,vel,obs,robot1,robot2):
         
         x_current = x[0]
         x=x_current[0] 
@@ -486,7 +496,7 @@ class  NMPC():
         if not self.__initialized:
             self.__initialize(state)
 
-        self.__set_controller_trajectory(x,y,th,traj,vel,obs)
+        self.__set_controller_trajectory(x,y,th,traj,vel,obs,robot1,robot2)
 
         self.__solver.set(0, 'lbx', state)
         self.__solver.set(0, 'ubx', state)
@@ -592,7 +602,7 @@ class  NMPC():
         self.__solver.set(self.__N, 'x', state)
         #self.__initialized=True 
 
-    def __set_controller_trajectory(self,x,y,th,traj,vel,obs,robots=None):
+    def __set_controller_trajectory(self,x,y,th,traj,vel,obs,robot1,robot2):
         Q_0=self.__Q_0
         Q_i=self.__Q_i
         Q_e=self.__Q_e
@@ -603,13 +613,13 @@ class  NMPC():
                     self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q_i, self.__R))
                 #self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0,traj[i,0],traj[i,1],0]),np.zeros((self.__nu)))))
                 self.__solver.set(i, 'yref', np.concatenate((np.array([traj[i,0],traj[i,1],0,0.1,0]),np.zeros((self.__nu)))))
-                self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robots))
+                self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robot1[0,:], robot2[0,:]))
                 
                 #Q = Q - (i / len(traj)) * (Q_-self.__Q_e)
           
 
         self.__solver.cost_set(self.__N, 'W', Q_e)
-        self.__solver.set(self.__N, 'p', self.__set_params(x,y,th,traj[self.__N-1],vel[self.__N-1],obs,robots))
+        self.__solver.set(self.__N, 'p', self.__set_params(x,y,th,traj[self.__N-1],vel[self.__N-1],obs,robot1[0,:], robot2[0,:]))
         self.__solver.set(self.__N, 'yref', np.array([traj[self.__N-1,0],traj[self.__N-1,1],0,0.1,0.0]))     
         
 
@@ -621,18 +631,25 @@ class  NMPC():
                     else:
                         self.__solver.cost_set(index[0], 'W', scipy.linalg.block_diag(Q_matrix_waypoint, self.__R))
 
-    def __set_params(self,x,y,th,traj,vel,obs,robots=None):
+    def __set_params(self,x,y,th,traj,vel,obs,robot1,robot2):
         xd=traj[0]
         yd=traj[1]
         xdotd=vel[0]
         ydotd=vel[1]
-        
-   
+        #print(robot1[0])
+        #print(robot1[1])
+        robot1 = np.array([robot1[0], robot1[1], self._robot_radius])
+        robot2 = np.array([robot2[0], robot2[1], self._robot_radius])
         params=np.array([xd,yd,xdotd,ydotd])
         if self.obstacle_used:
             for i in range(self.numberofobs):
                 params = np.concatenate((params, obs[i]))
-                  
+        if self.__number_of_robots>1:
+            params = np.concatenate((params,robot1))
+            params = np.concatenate((params,robot2))
+            
+        
+                 
         return params
     
     def simulator(self,x,u):

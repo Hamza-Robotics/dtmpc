@@ -10,13 +10,15 @@ from ATNMPC import NMPC as NMPC
 from visualization_msgs.msg import MarkerArray, Marker
 import sympy as sp
 import time
-from conversion_functions import path2numpy, quaternion_to_euler, numpy2path
+from conversion_functions import path2numpy, quaternion_to_euler, numpy2path, path2numpy
 from geometry_msgs.msg import PoseStamped, Twist, PointStamped
 from dtmpc_interface.msg import Trajectory
 import matplotlib.pyplot as plt
 from robot_system import get_trajectory 
 from std_msgs.msg import Float64MultiArray
 robot= 'robot3'
+neighbor_robot1 = 'robot1'
+neighbor_robot2 = 'robot2'
 class Mpc_Controller(Node):
     def __init__(self):
         super().__init__('mpccontroller'+robot)
@@ -28,7 +30,13 @@ class Mpc_Controller(Node):
         self.timer = self.create_timer(1/50, self.control_loop)
         self.subscription_state = self.create_subscription(PoseStamped,robot+'/pose',self.state_callback,10)
         self.subscription_obstacle = self.create_subscription(MarkerArray,'dtmpc/obstacle_list',self.obstacle_extractor,10)
-
+  
+        self.subscription_state1= self.create_subscription(Path,'dtmpc/'+neighbor_robot1+'/mpc/solution',self.state_callback_robot1,10)
+        self.subscription_state2= self.create_subscription(Path,'dtmpc/'+neighbor_robot2+'/mpc/solution',self.state_callback_robot2,10)
+        self.MPC.N=105
+        self.robot1_pos = np.ones((self.MPC.N, 3)) * 10
+        self.robot2_pos = np.ones((self.MPC.N, 3)) * 10
+    
         self.publisher_solutionx = self.create_publisher(Path, 'dtmpc/'+robot+'/mpc/solution', 10)
         self.publisher_twist = self.create_publisher(Twist, robot+'/cmd_vel', 10)
         self.solution_u = self.create_publisher(Float64MultiArray, "dtmpc/"+robot+"/u_solution", 10)
@@ -47,6 +55,13 @@ class Mpc_Controller(Node):
         self.x_traj,self.y_traj,self.xd_traj,self.yd_traj=get_trajectory(robot)
 
 
+
+    def state_callback_robot1(self,msg):
+        self.robot1_pos=path2numpy(msg)
+        
+        
+    def state_callback_robot2(self,msg):
+        self.robot2_pos=path2numpy(msg)
     def trJ(self,t):
         x=self.x_traj(t)
         y=self.y_traj(t)
@@ -119,7 +134,7 @@ class Mpc_Controller(Node):
             xr, xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
             obs=[[2,6,0.5]]
 
-            u,self.x_solution=self.MPC.controller(self.x,xr,xd,self.obstacles)
+            u,self.x_solution=self.MPC.controller(self.x,xr,xd,self.obstacles,self.robot1_pos,self.robot2_pos)
 
             #u,self.x_solution=self.MPC.controller(self.x,self.traj,self.velocities,obs)
 

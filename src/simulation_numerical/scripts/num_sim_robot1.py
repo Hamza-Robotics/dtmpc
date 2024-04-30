@@ -13,7 +13,7 @@ class StatePublisher(Node):
         self.x=0.0
         self.y=0.00
         self.th0=0.0
-        self.hz=20
+        self.hz=50
         self.linear_x=0
         self.angular_z=0
 

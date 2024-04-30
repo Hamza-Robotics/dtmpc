@@ -4,9 +4,10 @@ nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
 obstacle:  True  #[BOOL]
 Number_obstacles: 3 #[INT]
+Number_Robots: 3 #[INT]
 print_acados_status: False #[BOOL]
 integrator_type: 'ERK'  #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
-nlp_solver_max_iter: 5 #[INT]
+nlp_solver_max_iter: 4 #[INT]
 cost_type: "LINEAR_LS"
 
 # MPC parameters
@@ -19,7 +20,7 @@ velocity_max: 0.5 #  [m/s]
 velocity_min: -0.5 # [m/s]
 angle_velocity_max: 40.  # [degrees/s]
 angle_velocity_min: -40. # [degrees/s]
-
+robot_radius: 0.3 # [m]
 
 ### Error Distance constraints
 ed_min: 0.1 # [m]
@@ -37,8 +38,8 @@ eo_max_f: 100.01 # [rad]
 
 
 # Slack variables
-L2_Norm: 1.e+6
-L1_Norm: 1.e+6
+L2_Norm: 1.e+8
+L1_Norm: 1.e+8
 
 # Weighting matrices
 #Q_matrix:  [1.e-6,1.e-6, 0,0,0]
