@@ -60,10 +60,12 @@ class Mpc_Controller(Node):
 
     def state_callback_robot1(self,msg):
         self.robot1_pos=path2numpy(msg)
-        
-        
+        #self.robot1_pos[1:,:] = self.robot1_pos[0,:]
+
     def state_callback_robot2(self,msg):
         self.robot2_pos=path2numpy(msg)
+        #self.robot2_pos[1:,:] = self.robot2_pos[0,:]
+        
 
     def trJ(self,t):
         x=self.x_traj(t)

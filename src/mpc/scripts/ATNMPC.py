@@ -485,7 +485,6 @@ class  NMPC():
         return e_d,e_o   
     
     def controller(self,x,traj,vel,obs,robot1,robot2):
-        print("shae",np.shape(robot1)   )
         x_current = x[0]
         x=x_current[0] 
         y=x_current[1] 
@@ -613,8 +612,7 @@ class  NMPC():
                     self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q_i, self.__R))
                 #self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0,traj[i,0],traj[i,1],0]),np.zeros((self.__nu)))))
                 self.__solver.set(i, 'yref', np.concatenate((np.array([traj[i,0],traj[i,1],0,0.1,0]),np.zeros((self.__nu)))))
-                print(np.shape(robot1))
-                print(i)
+    
                 self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robot1[i], robot2[i]))
                 
                 #Q = Q - (i / len(traj)) * (Q_-self.__Q_e)

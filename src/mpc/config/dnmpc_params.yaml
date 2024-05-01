@@ -50,9 +50,9 @@ L1_Norm: 1.e+6
 #Q_matrix_0:           [1.e+4,1.e+4,0, 0,0]
 #Q_matrix_i:           [1.e+4,1.e+4,0,0,0]
 #Q_matrix_e:           [1.e+4,1.e+4,0,0,0]
-Q_matrix_0:          [0,0,0,1.e+2,1.e+2]
-Q_matrix_i:          [0,0,0,1.e+5,1.e+0]
-Q_matrix_e:          [0,0,0,1.e+5,1.e+0]
+Q_matrix_0:          [0,0,0,1.e+5,1.e+2]
+Q_matrix_i:          [0,0,0,1.e+2,1.e+0]
+Q_matrix_e:          [0,0,0,1.e+2,1.e+0]
 
 #Q_matrix_waypoint: [0, 0]
 R_matrix:  [1.e+1,1.e+1]
