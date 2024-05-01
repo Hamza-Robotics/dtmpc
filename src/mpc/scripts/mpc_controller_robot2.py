@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 from robot_system import get_trajectory 
 from std_msgs.msg import Float64MultiArray
 robot= 'robot2'
-neighbor_robot1 = 'robot1'
-neighbor_robot2 = 'robot3'
+neighbor_robot1 = 'robot3'
+neighbor_robot2 = 'robot1'
 class Mpc_Controller(Node):
     def __init__(self):
         super().__init__('mpccontroller'+robot)
@@ -29,13 +29,16 @@ class Mpc_Controller(Node):
             self.obstacles.append([209,200,0.2])
         self.timer = self.create_timer(1/50, self.control_loop)
         self.subscription_state = self.create_subscription(PoseStamped,robot+'/pose',self.state_callback,10)
+        self.subscription_state1 = self.create_subscription(PoseStamped,neighbor_robot1+'/pose',self.state_callback1,10)
+        self.subscription_state2 = self.create_subscription(PoseStamped,neighbor_robot2+'/pose',self.state_callback2,10)
         self.subscription_obstacle = self.create_subscription(MarkerArray,'dtmpc/obstacle_list',self.obstacle_extractor,10)
   
-        self.subscription_state1= self.create_subscription(Path,'dtmpc/'+neighbor_robot1+'/mpc/solution',self.state_callback_robot1,10)
-        self.subscription_state2= self.create_subscription(Path,'dtmpc/'+neighbor_robot2+'/mpc/solution',self.state_callback_robot2,10)
+        self.subscription_solution1= self.create_subscription(Path,'dtmpc/'+neighbor_robot1+'/mpc/solution',self.state_callback_robot1,10)
+        self.subscription_solution2= self.create_subscription(Path,'dtmpc/'+neighbor_robot2+'/mpc/solution',self.state_callback_robot2,10)
+  
         self.MPC.N=105
-        self.robot1_pos = np.ones((self.MPC.N, 3)) * 10
-        self.robot2_pos = np.ones((self.MPC.N, 3)) * 10
+        self.robot1_pos = np.ones((self.MPC.N, 3)) * 0.1
+        self.robot2_pos = np.ones((self.MPC.N, 3)) * 0.1
     
         self.publisher_solutionx = self.create_publisher(Path, 'dtmpc/'+robot+'/mpc/solution', 10)
         self.publisher_twist = self.create_publisher(Twist, robot+'/cmd_vel', 10)
@@ -55,13 +58,13 @@ class Mpc_Controller(Node):
         self.x_traj,self.y_traj,self.xd_traj,self.yd_traj=get_trajectory(robot)
 
 
-
     def state_callback_robot1(self,msg):
         self.robot1_pos=path2numpy(msg)
         
         
     def state_callback_robot2(self,msg):
         self.robot2_pos=path2numpy(msg)
+
     def trJ(self,t):
         x=self.x_traj(t)
         y=self.y_traj(t)
@@ -124,7 +127,13 @@ class Mpc_Controller(Node):
                 Twist_msg.angular.z=u[0,1]
                 self.publisher_twist.publish(Twist_msg)
 
-    
+    def state_callback1(self,msg):
+        #self.robot1_pos=np.array([msg.pose.position.x,msg.pose.position.y,quaternion_to_euler(msg.pose.orientation)[2]]).reshape(1,3)
+        pass
+    def state_callback2(self,msg):
+        #self.robot2_pos=np.array([msg.pose.position.x,msg.pose.position.y,quaternion_to_euler(msg.pose.orientation)[2]]).reshape(1,3)
+        pass
+        
     def state_callback(self,msg):
         rpy=quaternion_to_euler(msg.pose.orientation)
         self.x=np.array([msg.pose.position.x,msg.pose.position.y,rpy[2]]).reshape(1,3)

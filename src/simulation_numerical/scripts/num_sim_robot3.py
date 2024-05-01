@@ -10,10 +10,10 @@ class StatePublisher(Node):
 
     def __init__(self):
         self.robot_name="robot3"
-        self.x=1.0
-        self.y=3.00
+        self.x=0.0
+        self.y=1.00
         self.th0=0.0
-        self.hz=50
+        self.hz=10
         self.linear_x=0
         self.angular_z=0
 

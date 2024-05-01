@@ -16,12 +16,12 @@ class  NMPC():
         self.frequency=yamlfile['Prediction_Frequency']
         self.__prediction_length = yamlfile['Prediction_Length']
         self.update_frequency=yamlfile['Update_Frequency']
-        self.obstacle_used=yamlfile['obstacle']
         self.numberofobs=yamlfile['Number_obstacles']
-        self.__robot_model=self.__define_model(robot_name,self.obstacle_used,yamlfile['Number_obstacles']+yamlfile['Number_Robots']-1)
-        self.__initialized=False
-        self.__number_of_robots=yamlfile['Number_Robots']
+        self.__number_of_robots=yamlfile['Number_Robots']-1
         self._robot_radius=yamlfile['robot_radius']
+        self.__robot_model=self.__define_model(robot_name,yamlfile['Number_obstacles']+self.__number_of_robots)
+        self.__initialized=False
+     
         self.__Tf = self.__prediction_length
         self.__N=int(self.__prediction_length*self.frequency)
         self.N=self.__N 
@@ -65,7 +65,6 @@ class  NMPC():
         self.__eo_f_min=yamlfile['eo_min_f']
         self.__ed_f_min=yamlfile['ed_min_f']
 
-        self.obstacle_used=yamlfile['obstacle']
         self.__numberofobs=yamlfile['Number_obstacles']
 
 
@@ -81,7 +80,7 @@ class  NMPC():
         print("hehehehe",obs)
         return ca.vertcat(*obs)
     
-    def __define_model(self,robot_name,obstacle_used,number_obs):
+    def __define_model(self,robot_name,number_obs):
         model=AcadosModel()
         # control inputs
         v = ca.SX.sym('v')
@@ -120,7 +119,7 @@ class  NMPC():
                             e_o,
  )      
         
-        if obstacle_used:
+        if number_obs>0:
             obs=self.__generate_obstacle_params(number_obs)
             paremeters  = ca.vertcat(
                     x_d,
@@ -222,7 +221,7 @@ class  NMPC():
 
         e_x=x_alg-x_d_alg
         e_y=y_alg-y_d_alg
-        e_d=ca.sqrt(e_x**2+e_y**2+0.01)
+        e_d=ca.sqrt(e_x**2+e_y**2+0.0001)
   
 
 
@@ -235,41 +234,42 @@ class  NMPC():
         self.__ns_i+=2
         self.__ns_0+=2
 
-
+        self.__avoidance_n=self.numberofobs+self.__number_of_robots
 
         if True:
             con_h=[e_d]
-        if self.obstacle_used:
-            for i in range(4,self.__numberofobs*3+4,3):
-                con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2]/2+0.2)**2)
-            
-            con_h_vcat=ca.vcat(con_h)
- 
- 
-            self.__ocp.model.con_h_expr_0 =con_h_vcat
-            self.__ocp.constraints.lh_0 =np.array([self.__ed_min] + [0]*self.__numberofobs)
-            self.__ocp.constraints.uh_0 =np.array([self.__ed_max] + [100]*self.__numberofobs)
-            self.__ocp.constraints.lsh_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
-            self.__ocp.constraints.ush_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
-            self.__ocp.constraints.idxsh_0 = np.array(range(len(con_h)))    # Jsh
-            self.__ns_0+=len(con_h)
-            
-            self.__ocp.model.con_h_expr =con_h_vcat
-            self.__ocp.constraints.lh =np.array([self.__ed_min] + [0]*self.__numberofobs)
-            self.__ocp.constraints.uh =np.array([self.__ed_max] + [100]*self.__numberofobs)
-            self.__ocp.constraints.lsh = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
-            self.__ocp.constraints.ush = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
-            self.__ocp.constraints.idxsh = np.array(range(len(con_h)))    # Jsh
-            self.__ns_i+=len(con_h)
 
-            self.__ocp.model.con_h_expr_e =con_h_vcat
-            self.__ocp.constraints.lh_e =np.array([self.__ed_min] + [0]*self.__numberofobs)
-            self.__ocp.constraints.uh_e =np.array([self.__ed_max] + [100]*self.__numberofobs)
-            self.__ocp.constraints.lsh_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
-            self.__ocp.constraints.ush_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
-            self.__ocp.constraints.idxsh_e = np.array(range(len(con_h)))    # Jsh
-            self.__ns_e+=len(con_h)
-      
+        for i in range(4,(self.__avoidance_n)*3+4,3):
+            print(i)
+            con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2]/2+0.2)**2)
+        
+        con_h_vcat=ca.vcat(con_h)
+
+
+        self.__ocp.model.con_h_expr_0 =con_h_vcat
+        self.__ocp.constraints.lh_0 =np.array([self.__ed_min] + [0]*self.__avoidance_n)
+        self.__ocp.constraints.uh_0 =np.array([self.__ed_max] + [100]*self.__avoidance_n)
+        self.__ocp.constraints.lsh_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+        self.__ocp.constraints.ush_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+        self.__ocp.constraints.idxsh_0 = np.array(range(len(con_h)))    # Jsh
+        self.__ns_0+=len(con_h)
+        
+        self.__ocp.model.con_h_expr =con_h_vcat
+        self.__ocp.constraints.lh =np.array([self.__ed_min] + [0]*self.__avoidance_n)
+        self.__ocp.constraints.uh =np.array([self.__ed_max] + [100]*self.__avoidance_n)
+        self.__ocp.constraints.lsh = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+        self.__ocp.constraints.ush = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+        self.__ocp.constraints.idxsh = np.array(range(len(con_h)))    # Jsh
+        self.__ns_i+=len(con_h)
+
+        self.__ocp.model.con_h_expr_e =con_h_vcat
+        self.__ocp.constraints.lh_e =np.array([self.__ed_min] + [0]*self.__avoidance_n)
+        self.__ocp.constraints.uh_e =np.array([self.__ed_max] + [100]*self.__avoidance_n)
+        self.__ocp.constraints.lsh_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+        self.__ocp.constraints.ush_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+        self.__ocp.constraints.idxsh_e = np.array(range(len(con_h)))    # Jsh
+        self.__ns_e+=len(con_h)
+    
 
         if False:
 
@@ -459,13 +459,13 @@ class  NMPC():
         self.__ocp.cost.yref = np.concatenate((x_ref, u_ref))
         self.__ocp.cost.yref_e = x_ref
         self.__ocp.solver_options.levenberg_marquardt = 1.0
-        #self.__ocp.solver_options.reg_epsilon='CONVEXIFY'
+        #self.__oc.solver_options.reg_epsilon='CONVEXIFY'
         self.__ocp.solver_options.qp_solver = self.__QP_solver
         self.__ocp.solver_options.nlp_solver_type = self.__nlp_solver_type
         self.__ocp.solver_options.tf = self.__Tf
         self.__ocp.solver_options.integrator_type=self.__integrator_type
         self.__ocp.solver_options.nlp_solver_max_iter=self.__nlp_solver_max_iter
-        self.__ocp.solver_options.qp_solver_warm_start=1
+        self.__ocp.solver_options.qp_solver_warm_start=2
 
         json_file = os.path.join('_acados_ocp.json')
         
@@ -485,7 +485,7 @@ class  NMPC():
         return e_d,e_o   
     
     def controller(self,x,traj,vel,obs,robot1,robot2):
-        
+        print("shae",np.shape(robot1)   )
         x_current = x[0]
         x=x_current[0] 
         y=x_current[1] 
@@ -613,13 +613,15 @@ class  NMPC():
                     self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q_i, self.__R))
                 #self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0,traj[i,0],traj[i,1],0]),np.zeros((self.__nu)))))
                 self.__solver.set(i, 'yref', np.concatenate((np.array([traj[i,0],traj[i,1],0,0.1,0]),np.zeros((self.__nu)))))
-                self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robot1[0,:], robot2[0,:]))
+                print(np.shape(robot1))
+                print(i)
+                self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robot1[i], robot2[i]))
                 
                 #Q = Q - (i / len(traj)) * (Q_-self.__Q_e)
           
 
         self.__solver.cost_set(self.__N, 'W', Q_e)
-        self.__solver.set(self.__N, 'p', self.__set_params(x,y,th,traj[self.__N-1],vel[self.__N-1],obs,robot1[0,:], robot2[0,:]))
+        self.__solver.set(self.__N, 'p', self.__set_params(x,y,th,traj[self.__N-1],vel[self.__N-1],obs,robot1[self.__N-1], robot2[self.__N-1]))
         self.__solver.set(self.__N, 'yref', np.array([traj[self.__N-1,0],traj[self.__N-1,1],0,0.1,0.0]))     
         
 
@@ -637,13 +639,16 @@ class  NMPC():
         xdotd=vel[0]
         ydotd=vel[1]
         #print(robot1[0])
-        #print(robot1[1])
+        #print(robot1)
+        
         robot1 = np.array([robot1[0], robot1[1], self._robot_radius])
         robot2 = np.array([robot2[0], robot2[1], self._robot_radius])
         params=np.array([xd,yd,xdotd,ydotd])
-        if self.obstacle_used:
-            for i in range(self.numberofobs):
-                params = np.concatenate((params, obs[i]))
+        
+        for i in range(self.__numberofobs):
+            
+            params = np.concatenate((params, obs[i]))
+            pass
         if self.__number_of_robots>1:
             params = np.concatenate((params,robot1))
             params = np.concatenate((params,robot2))
