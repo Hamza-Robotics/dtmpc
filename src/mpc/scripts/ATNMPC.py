@@ -241,7 +241,7 @@ class  NMPC():
 
         for i in range(4,(self.__avoidance_n)*3+4,3):
             print(i)
-            con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2]/2+0.2)**2)
+            con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2]+0.2)**2)
         
         con_h_vcat=ca.vcat(con_h)
 

@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 from robot_system import get_trajectory 
 from std_msgs.msg import Float64MultiArray
 robot= 'robot3'
-neighbor_robot1 = 'robot2'
-neighbor_robot2 = 'robot1'
+neighbor_robot1 = 'robot1'
+neighbor_robot2 = 'robot2'
 class Mpc_Controller(Node):
     def __init__(self):
         super().__init__('mpccontroller'+robot)
@@ -168,7 +168,7 @@ class Mpc_Controller(Node):
         obstacles=[]
         for marker in msg:
             #print(f"x: {marker.pose.position.x}, y: {marker.pose.position.y}, radius: {marker.scale.x}")
-            obstacles.append([marker.pose.position.x,marker.pose.position.y,marker.scale.x])
+            obstacles.append([marker.pose.position.x,marker.pose.position.y,marker.scale.x/2])
             
         # Sort obstacles based on their distance from the current position
         sorted_obstacles = sorted(obstacles, key=lambda obs: np.linalg.norm(obs[:2] - self.x[0, :2]))
