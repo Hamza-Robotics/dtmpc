@@ -96,8 +96,8 @@ class Mpc_Controller(Node):
         path.header.frame_id = 'map'
         for i in np.linspace(0, 2*np.pi, num=int(np.pi / 0.1)):
             point_msg = PoseStamped()
-            point_msg.pose.position.x=0.5*np.cos(i)+self.x[0,0]
-            point_msg.pose.position.y=0.5*np.sin(i)+self.x[0,1]   
+            point_msg.pose.position.x=self.MPC.communication_range*np.cos(i)+self.x[0,0]
+            point_msg.pose.position.y=self.MPC.communication_range*np.sin(i)+self.x[0,1]   
             path.poses.append(point_msg)
         self.publish_comrange.publish(path)
     def state_callback_robot1(self,msg):

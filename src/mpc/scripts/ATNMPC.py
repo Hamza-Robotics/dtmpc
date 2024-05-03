@@ -19,9 +19,10 @@ class  NMPC():
         self.numberofobs=yamlfile['Number_obstacles']
         self.__number_of_robots=yamlfile['Number_Robots']-1
         self._robot_radius=yamlfile['robot_radius']
+        self.robot_name=robot_name
         self.__robot_model=self.__define_model(robot_name,yamlfile['Number_obstacles']+self.__number_of_robots)
         self.__initialized=False
-     
+        self.communication_range=yamlfile['communication_range']
         self.__Tf = self.__prediction_length
         self.__N=int(self.__prediction_length*self.frequency)
         self.N=self.__N 
@@ -239,32 +240,50 @@ class  NMPC():
         if True:
             con_h=[e_d]
 
-        for i in range(4,(self.__avoidance_n)*3+4,3):
-            print(i)
-            con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2]+0.2)**2)
+        for i in range(4, (self.__numberofobs)*3+4, 3):
+            con_h.append((x_alg - self.__model.p[i+0])**2 + (y_alg - self.__model.p[i+1])**2 - (self.__model.p[i+2] + 0.1)**2)
+
+        robot_pos=[]
+        for i in range((self.__numberofobs)*3+4, (self.__numberofobs)*3+4+self.__number_of_robots*3  , 3):
+            con_h.append((x_alg - self.__model.p[i+0])**2 + (y_alg - self.__model.p[i+1])**2 - (self.__model.p[i+2] + 0.1)**2)
+            robot_pos.append([self.__model.p[i+0],self.__model.p[i+1],self.__model.p[i+2]])
+            
+       
+            xcom=robot_pos[0][0]
+            ycom=robot_pos[0][1]
         
+        if self.robot_name!="robot1":
+            self.__com=1
+            self.communication_range
+            con_h.append((ca.sqrt(x_alg-xcom)**2 + (y_alg-ycom)**2+0.001) - (self.communication_range))
+            ub_com=0
+            lb_com=-100
+        else:
+            self.__com=0
+            ub_com=0
+            lb_com=-100
         con_h_vcat=ca.vcat(con_h)
 
 
         self.__ocp.model.con_h_expr_0 =con_h_vcat
-        self.__ocp.constraints.lh_0 =np.array([self.__ed_min] + [0]*self.__avoidance_n)
-        self.__ocp.constraints.uh_0 =np.array([self.__ed_max] + [100]*self.__avoidance_n)
+        self.__ocp.constraints.lh_0 =np.array([self.__ed_min] + [0]*self.__avoidance_n+ [lb_com]*self.__com)
+        self.__ocp.constraints.uh_0 =np.array([self.__ed_max] + [100]*self.__avoidance_n+ [ub_com]*self.__com)
         self.__ocp.constraints.lsh_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
         self.__ocp.constraints.ush_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
         self.__ocp.constraints.idxsh_0 = np.array(range(len(con_h)))    # Jsh
         self.__ns_0+=len(con_h)
         
         self.__ocp.model.con_h_expr =con_h_vcat
-        self.__ocp.constraints.lh =np.array([self.__ed_min] + [0]*self.__avoidance_n)
-        self.__ocp.constraints.uh =np.array([self.__ed_max] + [100]*self.__avoidance_n)
+        self.__ocp.constraints.lh =np.array([self.__ed_min] + [0]*self.__avoidance_n+ [lb_com]*self.__com)
+        self.__ocp.constraints.uh  =np.array([self.__ed_max] + [100]*self.__avoidance_n+ [ub_com]*self.__com)
         self.__ocp.constraints.lsh = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
         self.__ocp.constraints.ush = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
         self.__ocp.constraints.idxsh = np.array(range(len(con_h)))    # Jsh
         self.__ns_i+=len(con_h)
 
         self.__ocp.model.con_h_expr_e =con_h_vcat
-        self.__ocp.constraints.lh_e =np.array([self.__ed_min] + [0]*self.__avoidance_n)
-        self.__ocp.constraints.uh_e =np.array([self.__ed_max] + [100]*self.__avoidance_n)
+        self.__ocp.constraints.lh_e =np.array([self.__ed_min] + [0]*self.__avoidance_n+ [lb_com]*self.__com)
+        self.__ocp.constraints.uh_e =np.array([self.__ed_max] + [100]*self.__avoidance_n+ [ub_com]*self.__com)
         self.__ocp.constraints.lsh_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
         self.__ocp.constraints.ush_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
         self.__ocp.constraints.idxsh_e = np.array(range(len(con_h)))    # Jsh
