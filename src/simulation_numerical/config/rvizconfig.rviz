@@ -198,6 +198,34 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /dtmpc/robot1/mpc/solution
       Value: true
+    - Alpha: 0.4000000059604645
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 248; 228; 92
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Billboards
+      Line Width: 0.029999999329447746
+      Name: r1 comm
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dtmpc/robot1/communication_range
+      Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
@@ -327,6 +355,34 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /dtmpc/robot2/mpc/solution
+      Value: true
+    - Alpha: 0.4000000059604645
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 248; 228; 92
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Billboards
+      Line Width: 0.029999999329447746
+      Name: r2 comm
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dtmpc/robot2/communication_range
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
@@ -458,6 +514,34 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /dtmpc/robot3/mpc/solution
       Value: true
+    - Alpha: 0.4000000059604645
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 248; 228; 92
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Billboards
+      Line Width: 0.029999999329447746
+      Name: r3 comm
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dtmpc/robot3/communication_range
+      Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: Obstacle
@@ -516,7 +600,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 10
+      Distance: 15.735194206237793
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -531,10 +615,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5747970938682556
+      Pitch: 1.4897964000701904
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.8704016208648682
+      Yaw: 0.9254015684127808
     Saved: ~
 Window Geometry:
   Displays:

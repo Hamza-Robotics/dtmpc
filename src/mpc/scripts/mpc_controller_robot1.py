@@ -74,11 +74,18 @@ class Mpc_Controller(Node):
     def pos_loop(self):
         current_time = self.get_clock().now().to_msg().sec
         time_diff=current_time-self.time_robot1
+        if time_diff>2 or robot=='robot1':
+            #self.robot1_pos = np.tile(self.pos1, (self.MPC.N, 1))
+            #self.robot2_pos = np.tile(self.pos2, (self.MPC.N, 1))
+            pass
         if time_diff>2:
             self.robot1_pos = np.tile(self.pos1, (self.MPC.N, 1))
             self.robot2_pos = np.tile(self.pos2, (self.MPC.N, 1))
-        else:
-            pass
+        if time_diff<2 and robot=='robot2':
+            self.robot1_pos = self.robot1_pos_temp
+            self.robot2_pos_temp = np.ones((self.MPC.N, 3)) * 0.1
+            
+        if time_diff<2 and robot=='robot3':
             self.robot1_pos = self.robot1_pos_temp
             self.robot2_pos = self.robot2_pos_temp
             
