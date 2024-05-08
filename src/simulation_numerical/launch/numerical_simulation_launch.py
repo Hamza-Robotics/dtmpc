@@ -65,10 +65,17 @@ def generate_launch_description():
     executable='obstacle.py'
 ) 
     
+    formation_node= Node(
+    package='simulation_numerical',
+    executable='formation_plotter.py'
+) 
+    
+    
     return LaunchDescription([
         robot1,
         robot2,
         robot3,
         node_rviz2,
         obstacle_node,
+        formation_node
     ])

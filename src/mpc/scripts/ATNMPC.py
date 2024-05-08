@@ -255,13 +255,13 @@ class  NMPC():
         if self.robot_name!="robot1":
             self.__com=1
             self.communication_range
-            con_h.append((ca.sqrt(x_alg-xcom)**2 + (y_alg-ycom)**2+0.001) - (self.communication_range))
+            con_h.append((ca.sqrt(x_alg-xcom)**2 + (y_alg-ycom)**2+0.001) - ((self.communication_range-0.1)*2))
             ub_com=0
             lb_com=-100
         else:
             self.__com=0
             ub_com=0
-            lb_com=-100
+            lb_com=0
         con_h_vcat=ca.vcat(con_h)
 
 

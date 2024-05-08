@@ -6,18 +6,22 @@ from rclpy.qos import QoSProfile
 from geometry_msgs.msg import Quaternion, Twist, PoseStamped
 from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster, TransformStamped
+from nav_msgs.msg import Path
+import numpy as np
+import yaml
 class StatePublisher(Node):
 
     def __init__(self):
         self.robot_name="robot3"
-        self.x=0.0
-        self.y=1.00
+        self.x=2.0
+        self.y=2.40
         self.th0=0.0
         self.hz=10
         self.linear_x=0
         self.angular_z=0
-
-
+        with open('src/mpc/config/dnmpc_params.yaml') as file:
+            yamlfile = yaml.safe_load(file)
+        self.communication_range = yamlfile['communication_range']
         super().__init__(self.robot_name+'_statepublisher')
 
         qos_profile = QoSProfile(depth=10)
@@ -27,6 +31,7 @@ class StatePublisher(Node):
         self.publish_state= self.create_publisher(PoseStamped, self.robot_name+'/pose', qos_profile)
         self.subscription = self.create_subscription(Twist,self.robot_name+'/cmd_vel',self.integrator,10)
         self.subscription  # prevent unused variable warning
+        self.publish_comrange = self.create_publisher(Path, 'dtmpc/'+self.robot_name+'/communication_range', 10)
 
         
         #self.nodeName = self.get_name()
@@ -78,7 +83,17 @@ class StatePublisher(Node):
         self.joint_pub.publish(self.joint_state)
         self.publish_transforms.publish(self.odom_trans)
         self.broadcaster.sendTransform(self.odom_trans)
-
+        
+        
+        path=Path()
+        path.header.stamp = self.get_clock().now().to_msg()
+        path.header.frame_id = 'map'
+        for i in np.linspace(0, 2*np.pi, num=int(np.pi / 0.1)):
+            point_msg = PoseStamped()
+            point_msg.pose.position.x=self.communication_range*np.cos(i)+self.x
+            point_msg.pose.position.y=self.communication_range*np.sin(i)+self.y   
+            path.poses.append(point_msg)
+        self.publish_comrange.publish(path)
 
 
 def euler_to_quaternion(roll, pitch, yaw):

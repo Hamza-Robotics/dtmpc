@@ -39,6 +39,7 @@ scripts/num_sim_robot2.py
 scripts/num_sim_robot3.py
 scripts/obstacle.py
 scripts/show_obstacle.py 
+scripts/formation_plotter.py
 DESTINATION lib/${PROJECT_NAME}
 )
 

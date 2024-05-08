@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from robot_system import get_trajectory 
 from std_msgs.msg import Float64MultiArray
 robot= 'robot1'
-neighbor_robot1 = 'robot2'
+neighbor_robot1 = 'robo2'
 neighbor_robot2 = 'robot3'
 class Mpc_Controller(Node):
     def __init__(self):
@@ -36,7 +36,6 @@ class Mpc_Controller(Node):
         self.subscription_solution1= self.create_subscription(Path,'dtmpc/'+neighbor_robot1+'/mpc/solution',self.state_callback_robot1,10)
         self.subscription_solution2= self.create_subscription(Path,'dtmpc/'+neighbor_robot2+'/mpc/solution',self.state_callback_robot2,10)
   
-        self.publish_comrange = self.create_publisher(Path, 'dtmpc/'+robot+'/communication_range', 10)
   
         #self.MPC.N=105
 
@@ -65,11 +64,31 @@ class Mpc_Controller(Node):
         self.robot2_pos = np.ones((self.MPC.N, 3)) * 0.1
         self.robot1_pos_temp = np.ones((self.MPC.N, 3)) * 0.1
         self.robot2_pos_temp = np.ones((self.MPC.N, 3)) * 0.1
+        self.xdot=np.zeros((self.MPC.N,2))
         self.time_robot1=0
         self.position_loop= self.create_timer(1/10, self.pos_loop)
 
 
-
+    def convert_trajectory(self, trajectory):
+        converted_trajectory = []
+        if robot=='robot1':
+            for point in trajectory:
+                x = point[0]
+                y = point[1]
+                converted_trajectory.append([x, y])
+        if robot=='robot2':
+            for point in trajectory:
+                phi=np.rad2deg(-50)
+                x = np.sin(phi-point[2]) + point[0]
+                y = np.cos(phi-point[2]) + point[1]
+                converted_trajectory.append([x, y])
+        if robot=='robot3':
+            for point in trajectory:
+                phi=np.rad2deg(50)
+                x = np.sin(phi-point[2]) + point[0]
+                y = np.cos(phi-point[2]) + point[1]
+                converted_trajectory.append([x, y])
+        return np.array(converted_trajectory)
 
     def pos_loop(self):
         current_time = self.get_clock().now().to_msg().sec
@@ -81,25 +100,19 @@ class Mpc_Controller(Node):
         if time_diff>2:
             self.robot1_pos = np.tile(self.pos1, (self.MPC.N, 1))
             self.robot2_pos = np.tile(self.pos2, (self.MPC.N, 1))
+            self.xdot=np.zeros((self.MPC.N,2))
+            
         if time_diff<2 and robot=='robot2':
             self.robot1_pos = self.robot1_pos_temp
             self.robot2_pos_temp = np.ones((self.MPC.N, 3)) * 0.1
-            
+       
         if time_diff<2 and robot=='robot3':
             self.robot1_pos = self.robot1_pos_temp
             self.robot2_pos = self.robot2_pos_temp
+
             
             
-            
-        path=Path()
-        path.header.stamp = self.get_clock().now().to_msg()
-        path.header.frame_id = 'map'
-        for i in np.linspace(0, 2*np.pi, num=int(np.pi / 0.1)):
-            point_msg = PoseStamped()
-            point_msg.pose.position.x=self.MPC.communication_range*np.cos(i)+self.x[0,0]
-            point_msg.pose.position.y=self.MPC.communication_range*np.sin(i)+self.x[0,1]   
-            path.poses.append(point_msg)
-        self.publish_comrange.publish(path)
+
     def state_callback_robot1(self,msg):
         current_time = self.get_clock().now().to_msg().sec
         self.time_robot1= msg.header.stamp.sec
@@ -116,38 +129,75 @@ class Mpc_Controller(Node):
         xd=self.xd_traj(t)
         yd=self.yd_traj(t)
         return x,y,xd,yd    
-    
-    
+
+
     def trajectory_make(self,Ts,N):
-        path=Path()
-        path.header.stamp = self.get_clock().now().to_msg()
-        path.header.frame_id = 'map'
-        traj=[]
-        traj_dot=[]
-        current_time=time.time()
-        s=1
-        for i in range(0,N):
-            t=(Ts*i+current_time)   
-            
-            x=self.x_traj(t)
-            y=self.y_traj(t)
-            xd= self.xd_traj(t)
-            yd= self.yd_traj(t)
-            point_msg = PoseStamped()
-            point_msg.pose.position.x=x
-            point_msg.pose.position.y=y
-            path.poses.append(point_msg)
-            traj.append([x,y])  
-            traj_dot.append([xd,yd])
-        point = PointStamped()
-        point.header.stamp = self.get_clock().now().to_msg()
-        point.header.frame_id = 'map'
-        point.point.x = self.x_traj(current_time)
-        point.point.y = self.y_traj(current_time)
-        self.publisher_point.publish(point)
-        self.publisher_path.publish(path)
-            
-        return np.asanyarray(traj),np.asanyarray(traj_dot)
+        if robot=='robot1':
+            path=Path()
+            path.header.stamp = self.get_clock().now().to_msg()
+            path.header.frame_id = 'map'
+            traj=[]
+            traj_dot=[]
+            current_time=time.time()
+            s=1
+            for i in range(0,N):
+                t=(Ts*i+current_time)   
+                
+                x=self.x_traj(t)
+                y=self.y_traj(t)
+                xd= self.xd_traj(t)
+                yd= self.yd_traj(t)
+                point_msg = PoseStamped()
+                point_msg.pose.position.x=x
+                point_msg.pose.position.y=y
+                path.poses.append(point_msg)
+                traj.append([x,y])  
+                traj_dot.append([xd,yd])
+            point = PointStamped()
+            point.header.stamp = self.get_clock().now().to_msg()
+            point.header.frame_id = 'map'
+            point.point.x = self.x_traj(current_time)
+            point.point.y = self.y_traj(current_time)
+            self.publisher_point.publish(point)
+            self.publisher_path.publish(path)
+                
+            return np.asanyarray(traj),np.asanyarray(traj_dot)
+        else:
+            path=Path()
+            path.header.stamp = self.get_clock().now().to_msg()
+            path.header.frame_id = 'map'
+            traj=[]
+            traj_dot=[]
+            current_time=time.time()
+            s=1
+            xd=self.convert_trajectory(self.robot1_pos)
+            current_time = self.get_clock().now().to_msg().sec
+            time_diff=current_time-self.time_robot1
+            for i in range(0,N):
+                
+                t=(Ts*i+current_time)   
+                xdot= self.xd_traj(t)
+                ydot= self.yd_traj(t)
+                
+                point_msg = PoseStamped()
+                point_msg.pose.position.x=xd[i,0]
+                point_msg.pose.position.y=xd[i,1]
+                path.poses.append(point_msg)
+                traj.append([xd[i,0],xd[i,1]])  
+                if time_diff<2:
+                    traj_dot.append([xdot, ydot])
+                else:       
+                    traj_dot.append([0, 0])    
+
+            point = PointStamped()
+            point.header.stamp = self.get_clock().now().to_msg()
+            point.header.frame_id = 'map'
+            point.point.x = xd[0,0]
+            point.point.y = xd[0,1]
+            self.publisher_point.publish(point)
+            self.publisher_path.publish(path)
+                
+            return np.asanyarray(traj),np.asanyarray(traj_dot)
     
     def control_loop(self):
         if False:

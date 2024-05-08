@@ -29,7 +29,7 @@ def numpy2path(self,traj):
         pose.pose.position.y = traj[i,1]
 
         pose.pose.orientation= \
-        euler_to_quaternion(0, 0, 0)
+        euler_to_quaternion(0, 0, traj[i,2])
         pose.header.frame_id="map"
         pose.header.stamp=self.get_clock().now().to_msg()
         path.poses.append(pose)
@@ -46,6 +46,6 @@ def path2numpy(path):
     for i in range(len(path.poses)):
         traj[i,0] = path.poses[i].pose.position.x
         traj[i,1] = path.poses[i].pose.position.y
-        #roll, pitch, yaw = quaternion_to_euler(path.poses[i].pose.orientation)
-        traj[i,2] = 0
+        roll, pitch, yaw = quaternion_to_euler(path.poses[i].pose.orientation)
+        traj[i,2] = yaw
     return traj

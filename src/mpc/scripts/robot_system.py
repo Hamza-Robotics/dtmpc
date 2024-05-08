@@ -10,8 +10,9 @@ def get_trajectory(robot):
      
         k=0.5
         l=1
-        x=3*sp.sin(theta)+l*sp.sin(theta)
-        y=3*sp.cos(theta)+l*sp.cos(theta)
+        time_delay=0
+        x=3*sp.sin(theta-time_delay)+l*sp.sin(theta-time_delay)
+        y=3*sp.cos(theta-time_delay)+l*sp.cos(theta-time_delay)
         xd=sp.diff(x,t)
         yd=sp.diff(y,t)
         
@@ -25,9 +26,10 @@ def get_trajectory(robot):
     if robot=='robot2':
         
         k=0.
-        l=0.5
-        x=3*sp.sin(theta)+l*sp.sin(theta)
-        y=3*sp.cos(theta)+l*sp.cos(theta)
+        l=0
+        time_delay=0
+        x=3*sp.sin(theta-time_delay)+l*sp.sin(theta-time_delay)
+        y=3*sp.cos(theta-time_delay)+l*sp.cos(theta-time_delay)
         xd=sp.diff(x,t)
         yd=sp.diff(y,t)
         
@@ -43,9 +45,10 @@ def get_trajectory(robot):
         
       
         k=0.2
-        l=0.0
-        x=3*sp.sin(theta)+l*sp.sin(theta)
-        y=3*sp.cos(theta)+l*sp.cos(theta)
+        l=0
+        time_delay=0
+        x=3*sp.sin(theta-time_delay)+l*sp.sin(theta-time_delay)
+        y=3*sp.cos(theta-time_delay)+l*sp.cos(theta-time_delay)
         xd=sp.diff(x,t)
         yd=sp.diff(y,t)
         
