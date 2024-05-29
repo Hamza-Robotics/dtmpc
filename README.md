@@ -15,7 +15,7 @@
 - [License](#license)
 
 ## Introduction
-
+This is the implementation of the Master thesis titled : Tube-Based NMPC for non-holonomic multi-agent system in unknown enviorments. 
 
 ## Installation
 
