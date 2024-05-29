@@ -16,8 +16,10 @@ from dtmpc_interface.msg import Trajectory
 import matplotlib.pyplot as plt
 from robot_system import get_trajectory 
 from std_msgs.msg import Float64MultiArray
+import time
+import pickle
 robot= 'robot1'
-neighbor_robot1 = 'robo2'
+neighbor_robot1 = 'robot2'
 neighbor_robot2 = 'robot3'
 class Mpc_Controller(Node):
     def __init__(self):
@@ -35,7 +37,8 @@ class Mpc_Controller(Node):
   
         self.subscription_solution1= self.create_subscription(Path,'dtmpc/'+neighbor_robot1+'/mpc/solution',self.state_callback_robot1,10)
         self.subscription_solution2= self.create_subscription(Path,'dtmpc/'+neighbor_robot2+'/mpc/solution',self.state_callback_robot2,10)
-  
+        self.publishing_timer = self.create_timer(1.0 / 10, self.datasaver)  # Change 100 to your desired frequency (Hz)    
+
   
         #self.MPC.N=105
 
@@ -56,7 +59,8 @@ class Mpc_Controller(Node):
         self.solutionplot_ed=[]
         self.t=[]
         self.x_traj,self.y_traj,self.xd_traj,self.yd_traj=get_trajectory(robot)
-        
+        self.xr, self.xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
+
         
         self.pos1 = np.array([0,0,0.1]).reshape(1, 3)
         self.pos2 = np.array([0,0,0.1]).reshape(1, 3)
@@ -66,9 +70,17 @@ class Mpc_Controller(Node):
         self.robot2_pos_temp = np.ones((self.MPC.N, 3)) * 0.1
         self.xdot=np.zeros((self.MPC.N,2))
         self.time_robot1=0
+        self.loop_frequency = 10
         self.position_loop= self.create_timer(1/10, self.pos_loop)
+        self.outputlist=[]
 
+    def datasaver(self):
+        self.outputlist.append([self.x[0,:],self.xr[0:3]])
+        def pickle_data():
+            with open('/home/hamza/dtmpc/src/mpc/scripts/data.pickle', 'wb') as file:
+                pickle.dump(self.outputlist, file)
 
+        self.create_timer(10.0, pickle_data)
     def convert_trajectory(self, trajectory):
         converted_trajectory = []
         if robot=='robot1':
@@ -77,7 +89,7 @@ class Mpc_Controller(Node):
                 y = point[1]
                 converted_trajectory.append([x, y])
         if robot=='robot2':
-            for point in trajectory:
+            for point in trajectory:                
                 phi=np.rad2deg(-50)
                 x = np.sin(phi-point[2]) + point[0]
                 y = np.cos(phi-point[2]) + point[1]
@@ -85,8 +97,8 @@ class Mpc_Controller(Node):
         if robot=='robot3':
             for point in trajectory:
                 phi=np.rad2deg(50)
-                x = np.sin(phi-point[2]) + point[0]
-                y = np.cos(phi-point[2]) + point[1]
+                x = -np.sin(phi-point[2]) + point[0]
+                y = -np.cos(phi-point[2]) + point[1]
                 converted_trajectory.append([x, y])
         return np.array(converted_trajectory)
 
@@ -109,10 +121,7 @@ class Mpc_Controller(Node):
         if time_diff<2 and robot=='robot3':
             self.robot1_pos = self.robot1_pos_temp
             self.robot2_pos = self.robot2_pos_temp
-
-            
-            
-
+  
     def state_callback_robot1(self,msg):
         current_time = self.get_clock().now().to_msg().sec
         self.time_robot1= msg.header.stamp.sec
@@ -123,13 +132,13 @@ class Mpc_Controller(Node):
         #self.robot2_pos=path2numpy(msg)
         self.robot2_pos_temp=path2numpy(msg)
         pass
+    
     def trJ(self,t):
         x=self.x_traj(t)
         y=self.y_traj(t)
         xd=self.xd_traj(t)
         yd=self.yd_traj(t)
         return x,y,xd,yd    
-
 
     def trajectory_make(self,Ts,N):
         if robot=='robot1':
@@ -224,6 +233,7 @@ class Mpc_Controller(Node):
 
     def state_callback1(self,msg):
         self.pos1 = np.array([msg.pose.position.x, msg.pose.position.y, quaternion_to_euler(msg.pose.orientation)[2]]).reshape(1, 3)
+    
     def state_callback2(self,msg):
         self.pos2 = np.array([msg.pose.position.x, msg.pose.position.y, quaternion_to_euler(msg.pose.orientation)[2]]).reshape(1, 3)
         pass
@@ -234,10 +244,10 @@ class Mpc_Controller(Node):
         self.x_received=True
         if self.x_received:
             self.get_logger().info('Control loop')
-            xr, xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
+            self.xr, self.xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
             obs=[[2,6,0.5]]
 
-            u,self.x_solution=self.MPC.controller(self.x,xr,xd,self.obstacles,self.robot1_pos,self.robot2_pos)
+            u,self.x_solution=self.MPC.controller(self.x,self.xr,self.xd,self.obstacles,self.robot1_pos,self.robot2_pos,self.MPC.frequency)
 
             #u,self.x_solution=self.MPC.controller(self.x,self.traj,self.velocities,obs)
 
@@ -252,8 +262,7 @@ class Mpc_Controller(Node):
                 Twist_msg=Twist()
                 Twist_msg.linear.x=u[0,0]
                 Twist_msg.angular.z=u[0,1]
-                self.publisher_twist.publish(Twist_msg)
-    
+                self.publisher_twist.publish(Twist_msg)    
 
     def obstacle_extractor(self, msg):
         msg = msg.markers

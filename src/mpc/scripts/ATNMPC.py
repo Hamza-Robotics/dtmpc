@@ -68,7 +68,9 @@ class  NMPC():
 
         self.__numberofobs=yamlfile['Number_obstacles']
 
-
+        self.ed_k1=0
+        self.eo_k1=0
+        self.tubek1=0
         self.__linear_cost_function()
         self.__constraints()
         self.__solver_compiler()
@@ -253,9 +255,10 @@ class  NMPC():
             ycom=robot_pos[0][1]
         
         if self.robot_name!="robot1":
+        #if False:
             self.__com=1
             self.communication_range
-            con_h.append((ca.sqrt(x_alg-xcom)**2 + (y_alg-ycom)**2+0.001) - ((self.communication_range-0.1)*2))
+            con_h.append(ca.sqrt((x_alg-xcom)**2 + (y_alg-ycom)**2+0.001) - ((self.communication_range)))
             ub_com=0
             lb_com=-100
         else:
@@ -503,7 +506,7 @@ class  NMPC():
         e_o=(e_y*np.cos(th))/e_d-(e_x*np.sin(th))/e_d
         return e_d,e_o   
     
-    def controller(self,x,traj,vel,obs,robot1,robot2):
+    def controller(self,x,traj,vel,obs,robot1,robot2,hz):
         x_current = x[0]
         x=x_current[0] 
         y=x_current[1] 
@@ -541,8 +544,9 @@ class  NMPC():
 
         for i in range(self.__N):
             if i==0:
-                u1,u2=self.__tube(self.__solver.get(i, 'u'),state,traj[0],vel[0])
-
+                
+                u1=self.__solver.get(i, 'u')[0]
+                u2=self.__solver.get(i, 'u')[1]
                 u_list.append([u1,u2])
             u_list.append(self.__solver.get(i, 'u'))
             x_list.append(self.__solver.get(i,'x'))
@@ -567,15 +571,20 @@ class  NMPC():
         #print("control;",np.array([u_list[0][0],np.rad2deg(u_list[0][1])]))
   
 
-        self.__tube(u_list[0],x_list[0],traj[0],vel[0])
+        u0,u1=self.__tube(u_list[0],x_list[0],traj[0],vel[0],hz)
+  
+
+        self.u_list[0]=np.array([u0,u1])
         return self.u_list, self.x_list
     
-    def __tube(self,control ,state,traj,vel):
+    def __tube(self,control ,state,traj,vel,hz):
         x=state[0]
         y=state[1]
         theta=state[2]
         ed_st=state[3]
         eo_st=state[4]
+
+
 
         v=control[0]
         theta_dot=control[1]
@@ -586,31 +595,35 @@ class  NMPC():
         xd_dot=vel[0]
         yd_dot=vel[1]        
         
-        x_dot_bar=ca.cos(theta)*v
-        y_dot_bar=ca.sin(theta)*v
-        theta_dot_bar=theta_dot
         e_x=x-xd
         e_y=y-yd
         ed=ca.sqrt(e_x**2+e_y**2)
 
 
-        ed_dot_bar=((x_dot_bar - xd_dot)*e_x + (y_dot_bar - yd_dot)*e_y)/ed
-        eo_dot_bar=(((x_dot_bar - xd_dot)*e_x + (y_dot_bar - yd_dot)*e_y)*(e_x*ca.cos(theta) - e_y*ca.sin(theta)) + ((-x_dot_bar + xd_dot)*ca.cos(theta) + (y_dot_bar - yd_dot)*ca.sin(theta) + e_x*theta_dot_bar*ca.sin(theta) + e_y*theta_dot_bar*ca.cos(theta))*ed**2)/ed**3
-
         x_dot=ca.cos(theta)*v
         y_dot=ca.sin(theta)*v
         thneta_dot=theta_dot
-        ed_dot=((x_dot - xd_dot)*e_x + (y_dot - yd_dot)*e_y)/ed
-        eo_dot=(((x_dot - xd_dot)*e_x + (y_dot - yd_dot)*e_y)*(e_x*ca.cos(theta) - e_y*ca.sin(theta)) + ((-x_dot + xd_dot)*ca.cos(theta) + (y_dot - yd_dot)*ca.sin(theta) + e_x*theta_dot*ca.sin(theta) + e_y*theta_dot*ca.cos(theta))*ed**2)/ed**3
+        k1=-3.1
+        k2=-3.0
+        if self.tubek1==0:
+            self.ed_k1=ed_st
+            self.eo_k1=eo_st
+            self.tubek1=1
+        
+        u0=control[0]+k1*(ed_st-self.ed_k1)
+        u1=control[1]+k2*(eo_st-self.eo_k1)
+
+        print(u0, "=" , control[0],"+",k1,"*",ed_st,"-",self.ed_k1)
+        print(np.rad2deg(u1), "=", np.rad2deg(control[1]), "+", np.rad2deg(k2), "*", np.rad2deg(eo_st), "-", np.rad2deg(self.eo_k1))
+
+        self.ed_k1=ed_st+(((x_dot - xd_dot)*e_x + (y_dot - yd_dot)*e_y)/ed)*(1/hz)
+        self.eo_k1=eo_st+((((x_dot - xd_dot)*e_x + (y_dot - yd_dot)*e_y)*(e_x*ca.cos(theta) - e_y*ca.sin(theta)) + ((-x_dot + xd_dot)*ca.cos(theta) + (y_dot - yd_dot)*ca.sin(theta) + e_x*theta_dot*ca.sin(theta) + e_y*theta_dot*ca.cos(theta))*ed**2)/ed**3)*(1/hz)
+        
         
 
-        e_bar=np.array([ed_st+ed_dot_bar*(1/self.frequency),eo_st+eo_dot_bar*(1/self.frequency)])
-        e=    np.array([ed_st+ed_dot*(1/self.frequency),eo_st+eo_dot*(1/self.frequency)])
-        
         #print("e_bar",e_bar)
-        k1=0.5
-        k2=0.5
-        return control[0]+k1*(e[0]-e_bar[0]) , control[1]+k2*(e[1]-e_bar[1])
+
+        return u0,u1
 
     def __initialize(self,state):
         for i in range(self.__N):

@@ -3,30 +3,36 @@ from math import sin, cos, pi
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
-from geometry_msgs.msg import Quaternion, Twist
+from geometry_msgs.msg import Quaternion, Twist, PoseStamped
 from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster, TransformStamped
+from nav_msgs.msg import Path
+import numpy as np
+import yaml
+import time 
 class StatePublisher(Node):
 
     def __init__(self):
         self.robot_name="robot4"
-        self.x=1.0
-        self.y=-1.00
+        self.x=2.4
+        self.y=2.00
         self.th0=0.0
         self.hz=10
         self.linear_x=0
         self.angular_z=0
-
-
+        with open('src/mpc/config/dnmpc_params.yaml') as file:
+            yamlfile = yaml.safe_load(file)
+        self.communication_range = yamlfile['communication_range']
         super().__init__(self.robot_name+'_statepublisher')
 
         qos_profile = QoSProfile(depth=10)
         self.joint_pub = self.create_publisher(JointState, self.robot_name+'/joint_states', qos_profile)
-        self.publish_state = self.create_publisher(TransformStamped, self.robot_name+'/pose', qos_profile)
+        self.publish_transforms = self.create_publisher(TransformStamped, self.robot_name+'/transformed_stamped', qos_profile)
         self.broadcaster = TransformBroadcaster(self, qos=qos_profile)
-        
+        self.publish_state= self.create_publisher(PoseStamped, self.robot_name+'/pose', qos_profile)
         self.subscription = self.create_subscription(Twist,self.robot_name+'/cmd_vel',self.integrator,10)
         self.subscription  # prevent unused variable warning
+        self.publish_comrange = self.create_publisher(Path, 'dtmpc/'+self.robot_name+'/communication_range', 10)
 
         
         #self.nodeName = self.get_name()
@@ -50,8 +56,8 @@ class StatePublisher(Node):
         self.angular_z=msg.angular.z
 
     def publisher_loop(self):
-        self.x=self.x+cos(self.th0)*self.linear_x*1/(self.hz)
-        self.y=self.y+sin(self.th0)*self.linear_x*1/(self.hz)
+        self.x=self.x+(cos(self.th0)*self.linear_x+0.05*sin((pi/15)*time.time()  ))*1/(self.hz)
+        self.y=self.y+(sin(self.th0)*self.linear_x+0.05*cos((pi/15)*time.time()  ))*1/(self.hz)
         self.th0=self.th0+self.angular_z*1/(self.hz)
         now = self.get_clock().now()
         self.joint_state.header.stamp = now.to_msg()
@@ -64,12 +70,31 @@ class StatePublisher(Node):
         self.odom_trans.transform.translation.z = 0.0
         self.odom_trans.transform.rotation = \
             euler_to_quaternion(0, 0, self.th0) # roll,pitch,yaw
-
+        pose = PoseStamped()
+        pose.header.stamp = now.to_msg()
+        pose.header.frame_id = 'map'
+        pose.pose.position.x = self.x
+        pose.pose.position.y = self.y
+        pose.pose.position.z = 0.0
+        pose.pose.orientation = euler_to_quaternion(0, 0, self.th0)
+        
+        self.publish_state.publish(pose)
+        
         # send the joint state and transform
         self.joint_pub.publish(self.joint_state)
-        self.publish_state.publish(self.odom_trans)
+        self.publish_transforms.publish(self.odom_trans)
         self.broadcaster.sendTransform(self.odom_trans)
-
+        
+        
+        path=Path()
+        path.header.stamp = self.get_clock().now().to_msg()
+        path.header.frame_id = 'map'
+        for i in np.linspace(0, 2*np.pi, num=int(np.pi / 0.1)):
+            point_msg = PoseStamped()
+            point_msg.pose.position.x=self.communication_range*np.cos(i)+self.x
+            point_msg.pose.position.y=self.communication_range*np.sin(i)+self.y   
+            path.poses.append(point_msg)
+        self.publish_comrange.publish(path)
 
 
 def euler_to_quaternion(roll, pitch, yaw):

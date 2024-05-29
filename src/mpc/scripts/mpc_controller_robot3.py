@@ -16,6 +16,7 @@ from dtmpc_interface.msg import Trajectory
 import matplotlib.pyplot as plt
 from robot_system import get_trajectory 
 from std_msgs.msg import Float64MultiArray
+import time
 robot= 'robot3'
 neighbor_robot1 = 'robot1'
 neighbor_robot2 = 'robot2'
@@ -66,8 +67,8 @@ class Mpc_Controller(Node):
         self.robot2_pos_temp = np.ones((self.MPC.N, 3)) * 0.1
         self.xdot=np.zeros((self.MPC.N,2))
         self.time_robot1=0
+        self.loop_frequency = 10
         self.position_loop= self.create_timer(1/10, self.pos_loop)
-
 
     def convert_trajectory(self, trajectory):
         converted_trajectory = []
@@ -77,10 +78,10 @@ class Mpc_Controller(Node):
                 y = point[1]
                 converted_trajectory.append([x, y])
         if robot=='robot2':
-            for point in trajectory:
-                phi=np.rad2deg(50)
-                x = -np.sin(phi-point[2]) + point[0]
-                y = -np.cos(phi-point[2]) + point[1]
+            for point in trajectory:                
+                phi=np.rad2deg(-50)
+                x = np.sin(phi-point[2]) + point[0]
+                y = np.cos(phi-point[2]) + point[1]
                 converted_trajectory.append([x, y])
         if robot=='robot3':
             for point in trajectory:
@@ -109,10 +110,7 @@ class Mpc_Controller(Node):
         if time_diff<2 and robot=='robot3':
             self.robot1_pos = self.robot1_pos_temp
             self.robot2_pos = self.robot2_pos_temp
-
-            
-            
-
+  
     def state_callback_robot1(self,msg):
         current_time = self.get_clock().now().to_msg().sec
         self.time_robot1= msg.header.stamp.sec
@@ -229,6 +227,14 @@ class Mpc_Controller(Node):
         pass
         
     def state_callback(self,msg):
+
+
+
+
+
+
+
+
         rpy=quaternion_to_euler(msg.pose.orientation)
         self.x=np.array([msg.pose.position.x,msg.pose.position.y,rpy[2]]).reshape(1,3)
         self.x_received=True
@@ -237,7 +243,7 @@ class Mpc_Controller(Node):
             xr, xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
             obs=[[2,6,0.5]]
 
-            u,self.x_solution=self.MPC.controller(self.x,xr,xd,self.obstacles,self.robot1_pos,self.robot2_pos)
+            u,self.x_solution=self.MPC.controller(self.x,xr,xd,self.obstacles,self.robot1_pos,self.robot2_pos,self.MPC.frequency)
 
             #u,self.x_solution=self.MPC.controller(self.x,self.traj,self.velocities,obs)
 

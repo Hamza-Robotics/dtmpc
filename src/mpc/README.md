@@ -29,7 +29,6 @@ cd ~/dtmpc/
 
 Very important note. You must source each time you run the simulation. Each time you start up there is no need to build and install the code. Just run these lines and the libary is setup. 
 ```bash
-cd ~/dtmpc
 source setup_acados.sh
 ```
 
@@ -37,6 +36,7 @@ source setup_acados.sh
 
 #### 5. check if the installation is correct.
 ```bash
+source setup_acados.sh
 cd ~/dtmpc
 python3 src/mpc/acados/examples/acados_python/getting_started/minimal_example_ocp.py 
 ```

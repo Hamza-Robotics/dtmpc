@@ -9,12 +9,13 @@ from tf2_ros import TransformBroadcaster, TransformStamped
 from nav_msgs.msg import Path
 import numpy as np
 import yaml
+import time 
 class StatePublisher(Node):
 
     def __init__(self):
         self.robot_name="robot3"
-        self.x=2.0
-        self.y=2.40
+        self.x=2.4
+        self.y=2.00
         self.th0=0.0
         self.hz=10
         self.linear_x=0
@@ -55,8 +56,8 @@ class StatePublisher(Node):
         self.angular_z=msg.angular.z
 
     def publisher_loop(self):
-        self.x=self.x+cos(self.th0)*self.linear_x*1/(self.hz)
-        self.y=self.y+sin(self.th0)*self.linear_x*1/(self.hz)
+        self.x=self.x+(cos(self.th0)*self.linear_x+0.05*sin((pi/15)*time.time()  ))*1/(self.hz)
+        self.y=self.y+(sin(self.th0)*self.linear_x+0.05*cos((pi/15)*time.time()  ))*1/(self.hz)
         self.th0=self.th0+self.angular_z*1/(self.hz)
         now = self.get_clock().now()
         self.joint_state.header.stamp = now.to_msg()

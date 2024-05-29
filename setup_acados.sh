@@ -2,7 +2,7 @@
 
 # Change directory to acados directory
 cd ~/dtmpc/src/mpc/acados/
-
+source /opt/ros/humble/setup.bash
 # Set environment variables
 export acados_dir="$(pwd)"
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$acados_dir/lib"

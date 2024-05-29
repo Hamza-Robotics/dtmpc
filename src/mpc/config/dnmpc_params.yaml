@@ -4,7 +4,7 @@ nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
 Number_obstacles: 3  #[INT]
 Number_Robots: 3 #[INT]
-communication_range: 1.9 #[m]
+communication_range: 0.8 #[m]
 print_acados_status: False #[BOOL]
 integrator_type: 'ERK'  #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
 nlp_solver_max_iter: 7 #[INT]
@@ -20,7 +20,7 @@ velocity_max: 0.5 #  [m/s]
 velocity_min: -0.5 # [m/s]
 angle_velocity_max: 40.  # [degrees/s]
 angle_velocity_min: -40. # [degrees/s]
-robot_radius: 0.3 # [m]
+robot_radius: 0.25 # [m]
 
 ### Error Distance constraints
 ed_min: 0.1 # [m]
@@ -52,8 +52,8 @@ L1_Norm: 1.e+5
 #Q_matrix_i:           [1.e+4,1.e+4,0,0,0]
 #Q_matrix_e:           [1.e+4,1.e+4,0,0,0]
 Q_matrix_0:          [0,0,0,1.e+4,1.e+1]
-Q_matrix_i:          [0,0,0,1.e+1,1.e-1]
-Q_matrix_e:          [0,0,0,1.e+1,1.e-1]
+Q_matrix_i:          [0,0,0,1.e+0,1.e-1]
+Q_matrix_e:          [0,0,0,1.e+0,1.e-1]
 
 #Q_matrix_waypoint: [0, 0]
 R_matrix:  [1.e+0,1.e+0]
