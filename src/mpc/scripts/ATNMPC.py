@@ -31,7 +31,7 @@ class  NMPC():
         self.__model=self.__robot_model # Model
         self.__ocp = AcadosOcp()
         self.__ocp.model = self.__model #Define Model
-
+        self.__tube_on =yamlfile['Tube']
         # Initialize Parameters.
         self.__n_params = self.__model.p.size()[0]
         self.max_v=yamlfile['velocity_max']

@@ -21,11 +21,11 @@ class obstacle_node(Node):
 
         self.i = 0
         self.hz=10
-        self.obstacle1=np.array([1.0,4.0,0.5])
+        self.obstacle1=np.array([1.0,4.0,0.8])
         self.obstacle1_xd=np.array([0,0])
-        self.obstacle2=np.array([-2.0,2.0,0.5])
+        self.obstacle2=np.array([-2.,-2.0,1.4])
         self.obstacle2_xd=np.array([0,0])
-        self.obstacle3=np.array([0.0,0.0,1.0])
+        self.obstacle3=np.array([-2.0,-4.3,1.4])
         self.obstacle3_xd=np.array([0,0])
 
         
