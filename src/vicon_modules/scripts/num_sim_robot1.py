@@ -72,7 +72,7 @@ class StatePublisher(Node):
         pose.pose.position.z = 0.0
         pose.pose.orientation = euler_to_quaternion(0, 0, self.th0)
         
-        self.publish_state.publish(pose)
+        
         
         # send the joint state and transform
         self.joint_pub.publish(self.joint_state)
