@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+from math import sin, cos, pi
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Quaternion, Twist, PoseStamped
@@ -59,29 +59,37 @@ class MinimalPublisher(Node):
         self.subscriber_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.subscriber_socket.bind((HOST, PORT))
 
-        timer_period = 0.005  # seconds
+        timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
 
     def timer_callback(self):
-        data, addr = self.subscriber_socket.recvfrom(1024)  # Buffer size is 1024 bytes
-        #print(f"Received message from {addr}: {data.decode()}")
-        parsed=self.parse_xml_data(data.decode())
-        k=0
-        for i in range(len(parsed)):
-            msg = PoseStamped()
-            msg.header.stamp = self.get_clock().now().to_msg()
-            msg.header.frame_id = 'map'
-            msg.pose.position.x = float(parsed[i].get('x'))/1000
-            msg.pose.position.y = float(parsed[i].get('y'))/1000
-            msg.pose.position.z = 0.0
-            msg.pose.orientation = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-            for publisher_ in self.publishers_:
-                    if publisher_.id == parsed[i].get('id'):
-                        publisher_.publisher.publish(msg)
-                        break
-            print(parsed[0].get('id'), parsed[0].get('x'), parsed[0].get('time') - time.time())
-            print("Timer callback   ")
+        while True:
+            data, addr = self.subscriber_socket.recvfrom(1024)  # Buffer size is 1024 bytes
+            #print(f"Received message from {addr}: {data.decode()}")
+            parsed=self.parse_xml_data(data.decode())
+            k=0
+            for i in range(len(parsed)):
+                msg = PoseStamped()
+                msg.header.stamp = self.get_clock().now().to_msg()
+                msg.header.frame_id = 'map'
+                msg.pose.position.x = float(parsed[i].get('x'))/1000
+                msg.pose.position.y = float(parsed[i].get('y'))/1000
+                msg.pose.position.z = float(parsed[i].get('yaw')) 
+                msg.pose.orientation = euler_to_quaternion(0, 0, float(parsed[i].get('yaw')))
+                for publisher_ in self.publishers_:
+                        if publisher_.id == parsed[i].get('id'):
+                            publisher_.publisher.publish(msg)
+                            break
+                print(parsed[0].get('id'),  time.time()-parsed[0].get('time'))
+                print("Timer callback   ")
+
+def euler_to_quaternion(roll, pitch, yaw):
+    qx = sin(roll/2) * cos(pitch/2) * cos(yaw/2) - cos(roll/2) * sin(pitch/2) * sin(yaw/2)
+    qy = cos(roll/2) * sin(pitch/2) * cos(yaw/2) + sin(roll/2) * cos(pitch/2) * sin(yaw/2)
+    qz = cos(roll/2) * cos(pitch/2) * sin(yaw/2) - sin(roll/2) * sin(pitch/2) * cos(yaw/2)
+    qw = cos(roll/2) * cos(pitch/2) * cos(yaw/2) + sin(roll/2) * sin(pitch/2) * sin(yaw/2)
+    return Quaternion(x=qx, y=qy, z=qz, w=qw)
 
 def main(args=None):
     rclpy.init(args=args)

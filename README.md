@@ -17,9 +17,16 @@
 ## Introduction
 This is the implementation of the Master thesis titled : Tube-Based NMPC for non-holonomic multi-agent system in unknown enviorments. 
 
-## Installation
+## Article 
 
+Comming soon. 
+
+## Installation
+```bash
+git clone https://github.com/Hamza-Robotics/dtmpc
+```
 - Install acados. [Here](src/mpc/README.md) there is instruction on how to install Acados.
+
 
 
 
