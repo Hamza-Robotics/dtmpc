@@ -40,8 +40,8 @@ def generate_launch_description():
     mpc1=Node(
     package='mpc',
     executable='mpc_controller_robot1.py',
-                remappings=[
-                ('/cmd_vel', '/robot1/cmd_vel')],
+               remappings=[
+                ('/robot1/cmd_vel', '/cmd_vel')],
                  output='screen'
 
 ) 
