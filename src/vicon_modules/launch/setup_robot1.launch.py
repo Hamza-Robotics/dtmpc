@@ -35,13 +35,15 @@ def generate_launch_description():
     package='vicon_modules',
     executable='publish_state.py',
     output='screen',
-            remappings=[
-                ('/cmd_vel', '/robot1/cmd_vel')]
 ) 
     
     mpc1=Node(
     package='mpc',
-    executable='mpc_controller_robot1.py'
+    executable='mpc_controller_robot1.py',
+                remappings=[
+                ('/cmd_vel', '/robot1/cmd_vel')],
+                 output='screen'
+
 ) 
     
     
