@@ -255,7 +255,7 @@ class Mpc_Controller(Node):
         self.x=np.array([msg.pose.position.x,msg.pose.position.y,rpy[2]]).reshape(1,3)
         self.x_received=True
         if self.x_received:
-            self.get_logger().info('Control loop')
+            self.get_logger().info('Control loop running for '+robot)
             self.xr, self.xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
             obs=[[2,6,0.5]]
 

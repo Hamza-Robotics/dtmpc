@@ -86,10 +86,10 @@ class MinimalPublisher(Node):
                                 publisher_.publisher.publish(msg)
                                 break
                     print(parsed[0].get('id'),  time.time()-parsed[0].get('time'))
-                    print("Timer callback   ")
+                    
             except:
                     #log error
-                print("YOU WILL NEVER SEE")
+                print("no vicon feedback")
 
 def euler_to_quaternion(roll, pitch, yaw):
     qx = sin(roll/2) * cos(pitch/2) * cos(yaw/2) - cos(roll/2) * sin(pitch/2) * sin(yaw/2)
