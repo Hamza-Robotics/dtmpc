@@ -37,6 +37,12 @@ def generate_launch_description():
     output='screen',
 ) 
     
+    obstacle_node= Node(
+    package='simulation_numerical',
+    executable='obstacle.py'
+) 
+    
+
     mpc1=Node(
     package='mpc',
     executable='mpc_controller_robot1.py',
@@ -50,7 +56,8 @@ def generate_launch_description():
     return LaunchDescription([
         robot_bring_up,
         ovicon_state,
-        mpc1
+        mpc1,
+        obstacle_node
     ])
 
 
