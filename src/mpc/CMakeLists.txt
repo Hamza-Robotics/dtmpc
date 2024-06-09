@@ -26,6 +26,9 @@ scripts/mpc_controller_robot1.py
 scripts/mpc_controller_robot2.py
 scripts/mpc_controller_robot3.py
 
+
+scripts/mpc_commander_robot1.py
+
 scripts/NMPC.py
 scripts/TNMPC.py
 scripts/ATNMPC.py

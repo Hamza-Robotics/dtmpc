@@ -34,10 +34,11 @@ class Mpc_Controller(Node):
         self.subscription_state1 = self.create_subscription(PoseStamped,neighbor_robot1+'/pose',self.state_callback1,10)
         self.subscription_state2 = self.create_subscription(PoseStamped,neighbor_robot2+'/pose',self.state_callback2,10)
         self.subscription_obstacle = self.create_subscription(MarkerArray,'dtmpc/obstacle_list',self.obstacle_extractor,10)
-  
+        self.motor_commander = self.create_subscription(String, 'dtmpc/'+robot+'/commander', self.motor_commander, 10)
+        self.motor_time=time.time()
         self.subscription_solution1= self.create_subscription(Path,'dtmpc/'+neighbor_robot1+'/mpc/solution',self.state_callback_robot1,10)
         self.subscription_solution2= self.create_subscription(Path,'dtmpc/'+neighbor_robot2+'/mpc/solution',self.state_callback_robot2,10)
-        self.publishing_timer = self.create_timer(1., self.datasaver)  # Change 100 to your desired frequency (Hz)    
+        #self.publishing_timer = self.create_timer(1., self.datasaver)  # Change 100 to your desired frequency (Hz)    
 
   
         #self.MPC.N=105
@@ -84,6 +85,10 @@ class Mpc_Controller(Node):
             #self.outputlist=[]
         self.create_timer(180.0, pickle_data)
 
+
+    def motor_commander(self,msg):
+        self.motor_time=time.time()
+        pass
     def convert_trajectory(self, trajectory):
         converted_trajectory = []
         if robot=='robot1':
@@ -242,6 +247,10 @@ class Mpc_Controller(Node):
         pass
         
     def state_callback(self,msg):
+        if self.motor_time+0.1<time.time():
+            k=0
+        else:
+            k=1
         rpy=quaternion_to_euler(msg.pose.orientation)
         self.x=np.array([msg.pose.position.x,msg.pose.position.y,rpy[2]]).reshape(1,3)
         self.x_received=True
@@ -263,10 +272,10 @@ class Mpc_Controller(Node):
             if True:
 
                 Twist_msg=Twist()
-                Twist_msg.linear.x=u[0,0]
-                self.u1_send=u[0,0]
+                Twist_msg.linear.x=u[0,0]*k
+                #self.u1_send=u[0,0]
                 Twist_msg.angular.z=u[0,1]
-                self.u2_send=u[0,1]
+                #self.u2_send=u[0,1]
                 self.publisher_twist.publish(Twist_msg)    
 
     def obstacle_extractor(self, msg):

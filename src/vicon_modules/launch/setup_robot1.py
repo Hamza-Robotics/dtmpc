@@ -22,51 +22,30 @@ def generate_launch_description():
     pkg_path = os.path.join(get_package_share_directory(package_name))
 
 
-    robot1 = IncludeLaunchDescription(
+    robot_bring_up = IncludeLaunchDescription(
                     PythonLaunchDescriptionSource([os.path.join(
-                        get_package_share_directory('vicon_modules'),'launch','sim_robot1.launch.py'
+                        get_package_share_directory('turtlebot3_bringup'),'launch','robot.launch.py'
                     )])
         )
-    robot2 = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('vicon_modules'),'launch','sim_robot2.launch.py'
-                )])
-    )
-
-    robot3 = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('vicon_modules'),'launch','sim_robot3.launch.py'
-                )])
-    )
 
 
 
-    rvizfile=os.path.join(pkg_path,'config','rvizconfig.rviz')
-
-    node_rviz2= Node(
-        package='rviz2',
-        executable='rviz2',
-        arguments=['-d', rvizfile]
-    )
   
-    obstacle_node= Node(
+    ovicon_state= Node(
     package='vicon_modules',
     executable='publish_state.py'
 ) 
     
-    formation_node= Node(
+    mpc1=Node(
     package='mpc',
     executable='mpc_controller_robot1.py'
 ) 
     
     
     return LaunchDescription([
-        robot1,
-        robot2,
-        robot3,
-        node_rviz2,
-        obstacle_node,
-        formation_node
+        robot_bring_up,
+        ovicon_state,
+        mpc1
     ])
 
 
