@@ -33,7 +33,8 @@ def generate_launch_description():
    
     ovicon_state= Node(
     package='vicon_modules',
-    executable='publish_state.py'
+    executable='publish_state.py',
+    output='screen',
 ) 
     
     mpc1=Node(

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from math import sin, cos, pi
 import rclpy
+import rclpy.logging
 from rclpy.node import Node
 from geometry_msgs.msg import Quaternion, Twist, PoseStamped
 from std_msgs.msg import String
@@ -67,22 +68,28 @@ class MinimalPublisher(Node):
         while True:
             data, addr = self.subscriber_socket.recvfrom(1024)  # Buffer size is 1024 bytes
             #print(f"Received message from {addr}: {data.decode()}")
-            parsed=self.parse_xml_data(data.decode())
-            k=0
-            for i in range(len(parsed)):
-                msg = PoseStamped()
-                msg.header.stamp = self.get_clock().now().to_msg()
-                msg.header.frame_id = 'map'
-                msg.pose.position.x = float(parsed[i].get('x'))/1000
-                msg.pose.position.y = float(parsed[i].get('y'))/1000
-                msg.pose.position.z = float(parsed[i].get('yaw')) 
-                msg.pose.orientation = euler_to_quaternion(0, 0, float(parsed[i].get('yaw')))
-                for publisher_ in self.publishers_:
-                        if publisher_.id == parsed[i].get('id'):
-                            publisher_.publisher.publish(msg)
-                            break
-                print(parsed[0].get('id'),  time.time()-parsed[0].get('time'))
-                print("Timer callback   ")
+            try:
+                parsed=self.parse_xml_data(data.decode())
+                k=0
+                for i in range(len(parsed)):
+                    msg = PoseStamped()
+                    msg.header.stamp = self.get_clock().now().to_msg()
+                    msg.header.frame_id = 'map'
+                
+                    msg.pose.position.x = float(parsed[i].get('x'))/1000
+                    msg.pose.position.y = float(parsed[i].get('y'))/1000
+                    yaw=float(parsed[i].get('yaw'))
+                    msg.pose.position.z = yaw
+                    msg.pose.orientation = euler_to_quaternion(0, 0, yaw)
+                    for publisher_ in self.publishers_:
+                            if publisher_.id == parsed[i].get('id'):
+                                publisher_.publisher.publish(msg)
+                                break
+                    print(parsed[0].get('id'),  time.time()-parsed[0].get('time'))
+                    print("Timer callback   ")
+            except:
+                    #log error
+                print("YOU WILL NEVER SEE")
 
 def euler_to_quaternion(roll, pitch, yaw):
     qx = sin(roll/2) * cos(pitch/2) * cos(yaw/2) - cos(roll/2) * sin(pitch/2) * sin(yaw/2)
