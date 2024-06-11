@@ -41,6 +41,9 @@ scripts/show_robots.py
 scripts/num_sim_robot1.py
 scripts/num_sim_robot2.py
 scripts/num_sim_robot3.py
+scripts/vizualize_solution.py
+scripts/vizualize_trajectory.py
+scripts/conversion_functions.py
 DESTINATION lib/${PROJECT_NAME}
 )
 
