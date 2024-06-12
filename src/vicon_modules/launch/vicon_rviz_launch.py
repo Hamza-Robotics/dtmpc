@@ -24,9 +24,6 @@ def generate_launch_description():
     # Include the robot_state_publisher launch file, provided by our own package. Force sim time to be enabled
     # !!! MAKE SURE YOU SET THE PACKAGE NAME CORRECTLY !!!
 
-    package_name='simulation_numerical' #<--- CHANGE ME
-    pkg_path = os.path.join(get_package_share_directory(package_name))
-
 
     robot1 = IncludeLaunchDescription(
                     PythonLaunchDescriptionSource([os.path.join(
@@ -46,7 +43,7 @@ def generate_launch_description():
     )
 
 
-
+    pkg_path = os.path.join(get_package_share_directory('vicon_modules'))
     rvizfile=os.path.join(pkg_path,'config','rvizconfig.rviz')
 
     node_rviz2= Node(

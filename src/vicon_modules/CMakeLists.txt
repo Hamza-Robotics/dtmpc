@@ -26,7 +26,7 @@ endif()
 
 install(DIRECTORY
   launch
-
+  config
   scripts
   DESTINATION share/${PROJECT_NAME}/
 )
@@ -44,6 +44,7 @@ scripts/num_sim_robot3.py
 scripts/vizualize_solution.py
 scripts/vizualize_trajectory.py
 scripts/conversion_functions.py
+scripts/show_square.py
 DESTINATION lib/${PROJECT_NAME}
 )
 
