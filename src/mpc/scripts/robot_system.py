@@ -11,8 +11,8 @@ def get_trajectory(robot):
         k=0.5
         l=1
         time_delay=0
-        x=0.1*sp.sin(theta-time_delay)
-        y=0.1*sp.cos(theta-time_delay)
+        x=2*sp.sin(theta-time_delay)
+        y=2*sp.cos(theta-time_delay)
         xd=sp.diff(x,t)
         yd=sp.diff(y,t)
         
