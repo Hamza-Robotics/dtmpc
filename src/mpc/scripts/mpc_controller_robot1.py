@@ -293,11 +293,10 @@ class Mpc_Controller(Node):
             self.publisher_solutionx.publish(path_x)
             #if self.MPC.solver_status==0:
             if True:
-
                 Twist_msg=Twist()
-                Twist_msg.linear.x=u[0,0]*k
+                Twist_msg.linear.x = max(min(u[0,0]*k, self.MPC.max_v), self.MPC.min_v)
                 #self.u1_send=u[0,0]
-                Twist_msg.angular.z=u[0,1]*k
+                Twist_msg.angular.z = max(min(u[0,1]*k, self.MPC.max_th_d), self.MPC.min_th_d)
                 #self.u2_send=u[0,1]
                 self.publisher_twist.publish(Twist_msg)    
 

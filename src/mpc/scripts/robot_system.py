@@ -4,7 +4,7 @@
 import sympy as sp
 def get_trajectory(robot):
     t=sp.symbols('t')
-    theta=sp.pi*t/50
+    theta=sp.pi*t/70
     if robot=='robot1':
 
      
