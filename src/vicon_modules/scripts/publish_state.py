@@ -65,7 +65,7 @@ class MinimalPublisher(Node):
         self.i = 0
 
     def timer_callback(self):
-        data, addr = self.subscriber_socket.recvfrom(1024)  # Buffer size is 1024 bytes
+        data, addr = self.subscriber_socket.recvfrom(65400)  # Buffer size is 1024 bytes
         
         try:
             parsed=self.parse_xml_data(data.decode())
