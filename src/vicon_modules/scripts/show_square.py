@@ -23,7 +23,7 @@ class PathPublisher(Node):
 
         # Points in meters  
         points = [
-            (-1.837, 0.087),  # Point 1
+            (-2, 0.0),  # Point 1
             (-0.183, 1.380),
             (1.443, 0.072),   # Point 2
             (-0.085, -2.269), # Point 3
