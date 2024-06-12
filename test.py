@@ -5,7 +5,7 @@ import numpy as np
 class Receiver:
     def __init__(self):
         self.HOST = ''  # Empty string means to listen on all available interfaces
-        self.PORT = 11111
+        self.PORT = int(str(1)*5)
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.receiver.bind((self.HOST, self.PORT))
         self.BUFFER_SIZE = 65536  # Increase buffer size to handle larger data

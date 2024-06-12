@@ -65,12 +65,29 @@ def generate_launch_description():
     executable='formation_plotter.py'
 ) 
     
+    solution_node= Node(
+    package='vicon_modules',
+    executable='vizualize_solution.py'
+) 
+
+    trajectory_node= Node(
+    package='vicon_modules',
+    executable='vizualize_trajectory.py'
+)
     
+    show_state_node= Node(
+    package='vicon_modules',
+    executable='publish_state.py')
+
     return LaunchDescription([
         robot1,
         robot2,
         robot3,
         node_rviz2,
         obstacle_node,
-        formation_node
+        formation_node,
+        solution_node,
+        trajectory_node,
+        show_state_node
+
     ])
