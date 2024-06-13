@@ -53,9 +53,9 @@ class MinimalPublisher(Node):
         self.publisher_1 = Publisher_(self.create_publisher(PoseStamped, 'robot1/pose', 10),"robot1")
         self.publisher_2 = Publisher_(self.create_publisher(PoseStamped, 'robot2/pose', 10),"robot2")
         self.publisher_3 = Publisher_(self.create_publisher(PoseStamped, 'robot3/pose', 10),"robot3")
-        HOST = '192.168.0.255'  # IP address of the broadcaster
+        HOST = '192.168.1.67'  # IP address of the broadcaster
         
-        PORT = 12345  # The same port number used by the broadcaster
+        PORT = 1234  # The same port number used by the broadcaster
         self.publishers_=[self.publisher_1,self.publisher_2,self.publisher_3]
         self.subscriber_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.subscriber_socket.bind((HOST, PORT))
@@ -65,11 +65,12 @@ class MinimalPublisher(Node):
         self.i = 0
 
     def timer_callback(self):
-        data, addr = self.subscriber_socket.recvfrom(65400)  # Buffer size is 1024 bytes
+        data, addr = self.subscriber_socket.recvfrom(1024)  # Buffer size is 1024 bytes
         
         try:
             parsed=self.parse_xml_data(data.decode())
             k=0
+            print(parsed)
             for i in range(len(parsed)):
                 msg = PoseStamped()
                 msg.header.stamp = self.get_clock().now().to_msg()
