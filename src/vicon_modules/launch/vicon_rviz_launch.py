@@ -85,6 +85,6 @@ def generate_launch_description():
         formation_node,
         solution_node,
         trajectory_node,
-        show_state_node
+        #show_state_node
 
     ])

@@ -10,6 +10,7 @@ from nav_msgs.msg import Path
 import numpy as np
 import yaml
 import time 
+from conversion_functions import quaternion_to_euler
 class StatePublisher(Node):
 
     def __init__(self):
@@ -46,7 +47,7 @@ class StatePublisher(Node):
     def robot1_callback(self, msg):
         self.x = msg.pose.position.x
         self.y = msg.pose.position.y
-        self.th0 = msg.pose.position.z
+        self.th0 = quaternion_to_euler(msg.pose.orientation)[2]
 
 
     def publisher_loop(self):
