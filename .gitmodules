@@ -13,3 +13,4 @@
 [submodule "ros2-vicon-receiver"]
 	path = ros2-vicon-receiver
 	url = https://github.com/OPT4SMART/ros2-vicon-receiver.git
+	branch = humble
