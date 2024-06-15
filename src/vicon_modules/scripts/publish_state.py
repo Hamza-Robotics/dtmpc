@@ -73,7 +73,7 @@ class MinimalPublisher(Node):
                 self.previous_data = data  # Update previous data
                 try:
                     parsed = self.parse_xml_data(data.decode())
-                    print(parsed)
+                    #print(parsed)
                     for i in range(len(parsed)):
                         msg = PoseStamped()
                         msg.header.stamp = self.get_clock().now().to_msg()

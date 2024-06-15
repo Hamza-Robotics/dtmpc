@@ -58,7 +58,7 @@ def generate_launch_description():
     return LaunchDescription([
         robot_bring_up,
         ovicon_state,
-        #mpc1,
+        mpc1,
         obstacle_node,
 
     ])
