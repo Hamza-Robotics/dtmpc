@@ -51,7 +51,7 @@ class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('publish_vicon_state')
-        self.publisher_1 = Publisher_(self.create_publisher(PoseStamped, 'robot1/pose', 10),"robot1)
+        self.publisher_1 = Publisher_(self.create_publisher(PoseStamped, 'robot1/pose', 10),"robot1")
         self.publisher_2 = Publisher_(self.create_publisher(PoseStamped, 'robot2/pose', 10),"robot2")
         self.publisher_3 = Publisher_(self.create_publisher(PoseStamped, 'robot3/pose', 10),"robot3")
         HOST = '192.168.1.68'  # IP address of the broadcaster
