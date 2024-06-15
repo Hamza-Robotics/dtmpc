@@ -31,11 +31,7 @@ def generate_launch_description():
 
 
 
-    vicon_bring_up = IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource([os.path.join(
-                        get_package_share_directory('vicon_receiver'),'launch','client.launch.py'
-                    )])
-        )
+
    
     ovicon_state= Node(
     package='vicon_modules',
@@ -62,9 +58,9 @@ def generate_launch_description():
     return LaunchDescription([
         robot_bring_up,
         ovicon_state,
-        mpc1,
+        #mpc1,
         obstacle_node,
-        vicon_bring_up
+
     ])
 
 
