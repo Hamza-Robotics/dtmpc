@@ -38,8 +38,8 @@ def generate_launch_description():
         )
    
     ovicon_state= Node(
-    package='vicon_receiver',
-    executable='robot1.py',
+    package='vicon_modules',
+    executable='publish_state.py',
     output='screen',
 ) 
     

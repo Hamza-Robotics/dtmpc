@@ -14,6 +14,7 @@ class Publisher_():
     def __init__(self,publisher,id):
         self.publisher=publisher    
         self.id=id
+        
     
 
   
@@ -50,46 +51,51 @@ class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('publish_vicon_state')
-        self.publisher_1 = Publisher_(self.create_publisher(PoseStamped, 'robot1/pose', 10),"robot1")
+        self.publisher_1 = Publisher_(self.create_publisher(PoseStamped, 'robot1/pose', 10),"Fugl2_0")
         self.publisher_2 = Publisher_(self.create_publisher(PoseStamped, 'robot2/pose', 10),"robot2")
         self.publisher_3 = Publisher_(self.create_publisher(PoseStamped, 'robot3/pose', 10),"robot3")
         HOST = '192.168.1.67'  # IP address of the broadcaster
-        
         PORT = 1234  # The same port number used by the broadcaster
         self.publishers_=[self.publisher_1,self.publisher_2,self.publisher_3]
         self.subscriber_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.subscriber_socket.bind((HOST, PORT))
-
+        self.previous_data = None
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
 
+
     def timer_callback(self):
-        data, addr = self.subscriber_socket.recvfrom(1024)  # Buffer size is 1024 bytes
-        
-        try:
-            parsed=self.parse_xml_data(data.decode())
-            k=0
-            print(parsed)
-            for i in range(len(parsed)):
-                msg = PoseStamped()
-                msg.header.stamp = self.get_clock().now().to_msg()
-                msg.header.frame_id = 'map'
+            data, addr = self.subscriber_socket.recvfrom(1024)  # Buffer size is 1024 bytes
             
-                msg.pose.position.x = float(parsed[i].get('x'))/1000
-                msg.pose.position.y = float(parsed[i].get('y'))/1000
-                yaw=float(parsed[i].get('yaw'))
-                msg.pose.position.z = yaw
-                msg.pose.orientation = euler_to_quaternion(0, 0, yaw)
-                for publisher_ in self.publishers_:
-                        if publisher_.id == parsed[i].get('id'):
-                            publisher_.publisher.publish(msg)
-                            break
+            # Check if data is different from the previous data
+            if data != self.previous_data:
+                self.previous_data = data  # Update previous data
+                try:
+                    parsed = self.parse_xml_data(data.decode())
+                    print(parsed)
+                    for i in range(len(parsed)):
+                        msg = PoseStamped()
+                        msg.header.stamp = self.get_clock().now().to_msg()
+                        msg.header.frame_id = 'map'
+
+                        msg.pose.position.x = float(parsed[i].get('x')) / 1000
+                        msg.pose.position.y = float(parsed[i].get('y')) / 1000
+                        yaw = float(parsed[i].get('yaw'))
+                        msg.pose.position.z = yaw
+                        msg.pose.orientation = euler_to_quaternion(0, 0, yaw)
+                        
+                        for publisher_ in self.publishers_:
+                            if publisher_.id == parsed[i].get('id'):
+                                publisher_.publisher.publish(msg)
+                                break
+                except Exception as e:
+                    # Log error
+                    print(f"Error processing Vicon feedback: {e}")
+            else:
+                print("No new data received")
+
             
-                
-        except:
-                #log error
-            print("no vicon feedback")
 
 def euler_to_quaternion(roll, pitch, yaw):
     qx = sin(roll/2) * cos(pitch/2) * cos(yaw/2) - cos(roll/2) * sin(pitch/2) * sin(yaw/2)
