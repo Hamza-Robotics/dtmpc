@@ -15,11 +15,6 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
 
 
-    # Include the robot_state_publisher launch file, provided by our own package. Force sim time to be enabled
-    # !!! MAKE SURE YOU SET THE PACKAGE NAME CORRECTLY !!!
-
-    package_name='simulation_numerical' #<--- CHANGE ME
-    pkg_path = os.path.join(get_package_share_directory(package_name))
 
 
     robot_bring_up = IncludeLaunchDescription(
@@ -29,23 +24,6 @@ def generate_launch_description():
         )
 
 
-
-    vicon_bring_up = IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource([os.path.join(
-                        get_package_share_directory('vicon_receiver'),'launch','client.launch.py'
-                    )])
-        )
-   
-    ovicon_state= Node(
-    package='vicon_receiver',
-    executable='robot1.py',
-    output='screen',
-) 
-    
-    obstacle_node= Node(
-    package='simulation_numerical',
-    executable='obstacle.py'
-) 
     
 
     mpc1=Node(
