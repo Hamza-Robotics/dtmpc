@@ -17,6 +17,7 @@ class StatePublisher(Node):
         self.robot_name="robot1"
         self.x=2.4
         self.y=2.00
+        self.z=0.0
         self.th0=0.0
         self.hz=10
         self.linear_x=0
@@ -47,8 +48,9 @@ class StatePublisher(Node):
     def robot1_callback(self, msg):
         self.x = msg.pose.position.x
         self.y = msg.pose.position.y
+        self.z=msg.pose.position.z
         self.th0 = quaternion_to_euler(msg.pose.orientation)[2]
-
+        self.get_logger().info('Received pose: x=%f, y=%f, z=%f, th0=%f' % (self.x, self.y, self.z, self.th0))
 
     def publisher_loop(self):
         self.x=self.x
@@ -58,11 +60,13 @@ class StatePublisher(Node):
         self.joint_state.header.stamp = now.to_msg()
         self.joint_state.name = [self.robot_name+'/wheel_right_joint', self.robot_name+'/wheel_left_joint']
         self.joint_state.position = [0.0,0.0]
+        self.joint_state.velocity = [0.0,0.0]
+
         # (moving in a circle with radius=2)
         self.odom_trans.header.stamp = now.to_msg()
         self.odom_trans.transform.translation.x = self.x
         self.odom_trans.transform.translation.y = self.y
-        self.odom_trans.transform.translation.z = 0.0
+        self.odom_trans.transform.translation.z = self.z
         self.odom_trans.transform.rotation = \
             euler_to_quaternion(0, 0, self.th0) # roll,pitch,yaw
         pose = PoseStamped()
@@ -70,7 +74,7 @@ class StatePublisher(Node):
         pose.header.frame_id = 'map'
         pose.pose.position.x = self.x
         pose.pose.position.y = self.y
-        pose.pose.position.z = 0.0
+        pose.pose.position.z = self.z
         pose.pose.orientation = euler_to_quaternion(0, 0, self.th0)
         
         

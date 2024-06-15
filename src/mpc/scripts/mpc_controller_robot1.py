@@ -12,14 +12,11 @@ import sympy as sp
 import time
 from conversion_functions import path2numpy, quaternion_to_euler, numpy2path, path2numpy
 from geometry_msgs.msg import PoseStamped, Twist, PointStamped
-
 import matplotlib.pyplot as plt
 from robot_system import get_trajectory 
 from std_msgs.msg import Float64MultiArray
 import time
 import pickle
-import socket
-import json
 robot= 'robot1'
 neighbor_robot1 = 'robot2'
 neighbor_robot2 = 'robot3'
@@ -30,29 +27,21 @@ class Mpc_Controller(Node):
         self.MPC = NMPC(robot)
         self.obstacles = []
         for i in range(self.MPC.numberofobs):
-            self.obstacles.append([2,2,0.2])
+            self.obstacles.append([209,200,0.2])
         self.timer = self.create_timer(1/50, self.control_loop)
         self.subscription_state = self.create_subscription(PoseStamped,robot+'/pose',self.state_callback,10)
         self.subscription_state1 = self.create_subscription(PoseStamped,neighbor_robot1+'/pose',self.state_callback1,10)
         self.subscription_state2 = self.create_subscription(PoseStamped,neighbor_robot2+'/pose',self.state_callback2,10)
         self.subscription_obstacle = self.create_subscription(MarkerArray,'dtmpc/obstacle_list',self.obstacle_extractor,10)
-        self.motor_commander = self.create_subscription(String, 'dtmpc/'+robot+'/commander', self.motor_commander, 10)
-        self.motor_time=time.time()
+  
         self.subscription_solution1= self.create_subscription(Path,'dtmpc/'+neighbor_robot1+'/mpc/solution',self.state_callback_robot1,10)
         self.subscription_solution2= self.create_subscription(Path,'dtmpc/'+neighbor_robot2+'/mpc/solution',self.state_callback_robot2,10)
-        #self.publishing_timer = self.create_timer(1., self.datasaver)  # Change 100 to your desired frequency (Hz)    
+        self.publishing_timer = self.create_timer(1., self.datasaver)  # Change 100 to your desired frequency (Hz)    
 
   
+        #self.MPC.N=105
 
-        self.HOSTS = ["192.168.1.67", "192.168.0.254"]  # Example list of broadcast IP addresses
-        self.PORT = int(robot[5] * 5)
-        self.broadcaster = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.broadcaster.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-
-        self.broadcaster_trajectory = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.broadcaster_trajectory.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-
-
+    
         self.publisher_solutionx = self.create_publisher(Path, 'dtmpc/'+robot+'/mpc/solution', 10)
         self.publisher_twist = self.create_publisher(Twist, robot+'/cmd_vel', 10)
         self.solution_u = self.create_publisher(Float64MultiArray, "dtmpc/"+robot+"/u_solution", 10)
@@ -94,10 +83,6 @@ class Mpc_Controller(Node):
             #self.outputlist=[]
         self.create_timer(180.0, pickle_data)
 
-
-    def motor_commander(self,msg):
-        self.motor_time=time.time()
-        pass
     def convert_trajectory(self, trajectory):
         converted_trajectory = []
         if robot=='robot1':
@@ -254,37 +239,17 @@ class Mpc_Controller(Node):
     def state_callback2(self,msg):
         self.pos2 = np.array([msg.pose.position.x, msg.pose.position.y, quaternion_to_euler(msg.pose.orientation)[2]]).reshape(1, 3)
         pass
-
-
-    def broadcast_solution(self, solution):
-        solution_json = json.dumps(solution.tolist())
-        solution_bytes = solution_json.encode('utf-8')
-        for host in self.HOSTS:
-            self.broadcaster.sendto(solution_bytes, (host, self.PORT))
-
-    def broadcast_trajectory(self, solution):
-        solution_json = json.dumps(solution.tolist())
-        solution_bytes = solution_json.encode('utf-8')
-        for host in self.HOSTS:
-            self.broadcaster.sendto(solution_bytes, (host, self.PORT + 1))
-
-
+        
     def state_callback(self,msg):
-        if self.motor_time+0.1<time.time():
-            k=0
-        else:
-            k=1
         rpy=quaternion_to_euler(msg.pose.orientation)
         self.x=np.array([msg.pose.position.x,msg.pose.position.y,rpy[2]]).reshape(1,3)
         self.x_received=True
         if self.x_received:
-            self.get_logger().info('Control loop running for '+robot)
+            self.get_logger().info('Control loop')
             self.xr, self.xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
             obs=[[2,6,0.5]]
 
             u,self.x_solution=self.MPC.controller(self.x,self.xr,self.xd,self.obstacles,self.robot1_pos,self.robot2_pos,self.MPC.frequency)
-            self.broadcast_solution(self.x_solution)   
-            self.broadcast_trajectory(self.xr)
 
             #u,self.x_solution=self.MPC.controller(self.x,self.traj,self.velocities,obs)
 
@@ -295,11 +260,12 @@ class Mpc_Controller(Node):
             self.publisher_solutionx.publish(path_x)
             #if self.MPC.solver_status==0:
             if True:
+
                 Twist_msg=Twist()
-                Twist_msg.linear.x = (u[0,0]*k)
-                #self.u1_send=u[0,0]
-                Twist_msg.angular.z = (u[0,1]*k)
-                #self.u2_send=u[0,1]
+                Twist_msg.linear.x=u[0,0]
+                self.u1_send=u[0,0]
+                Twist_msg.angular.z=u[0,1]
+                self.u2_send=u[0,1]
                 self.publisher_twist.publish(Twist_msg)    
 
     def obstacle_extractor(self, msg):

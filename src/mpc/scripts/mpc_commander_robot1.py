@@ -2,26 +2,28 @@
 
 import rclpy
 from rclpy.node import Node
-
-from std_msgs.msg import String
-
+from geometry_msgs.msg import Twist
+import socket
 
 class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('moror_commander_robot1')
-        self.publisher_ = self.create_publisher(String, 'dtmpc/robot1/commander', 10)
-        timer_period = 0.01  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.i = 0
+        self.subscriber_=self.create_subscription(Twist, '/robot1/cmd_vel', self.listener_callback, 10)
 
-    def timer_callback(self):
-        msg = String()
-        msg.data = 'robot 1 is moving'
-        self.publisher_.publish(msg)
+        # Set up UDP socket
+        self.udp_ip = "192.168.1.68"  # IP address of the target machine
+        self.udp_port = 5005        # Port number
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    def listener_callback(self, msg):
+        linear_x = msg.linear.x
+        self.get_logger().info('I heard: "%f"' % linear_x)
         
-        self.i += 1
-
+        # Send the data as an array
+        data = [msg.linear.x, msg.angular.z]
+        data_bytes = str(data).encode('utf-8')
+        self.sock.sendto(data_bytes, (self.udp_ip, self.udp_port))
 
 def main(args=None):
     rclpy.init(args=args)

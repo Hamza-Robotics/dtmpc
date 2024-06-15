@@ -33,6 +33,7 @@ class MinimalPublisher(Node):
             obj_id = obj.get('id')
             x = float(obj.get('x'))
             y = float(obj.get('y'))
+            z = float(obj.get('z'))
             yaw = float(obj.get('yaw'))
             time= float(obj.get('time'))
             # Create a dictionary for the object's data
@@ -40,6 +41,7 @@ class MinimalPublisher(Node):
                 'id': obj_id,
                 'x': x,
                 'y': y,
+                'z': z,
                 'yaw': yaw,
                 'time':time 
             }
@@ -54,7 +56,7 @@ class MinimalPublisher(Node):
         self.publisher_1 = Publisher_(self.create_publisher(PoseStamped, 'robot1/pose', 10),"robot1")
         self.publisher_2 = Publisher_(self.create_publisher(PoseStamped, 'robot2/pose', 10),"robot2")
         self.publisher_3 = Publisher_(self.create_publisher(PoseStamped, 'robot3/pose', 10),"robot3")
-        HOST = '192.168.1.68'  # IP address of the broadcaster
+        HOST = '192.168.1.67'  # IP address of the broadcaster
         PORT = 1234  # The same port number used by the broadcaster
         self.publishers_=[self.publisher_1,self.publisher_2,self.publisher_3]
         self.subscriber_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -67,7 +69,7 @@ class MinimalPublisher(Node):
 
     def timer_callback(self):
             data, addr = self.subscriber_socket.recvfrom(1024)  # Buffer size is 1024 bytes
-            
+            #print(f"Received data: {data}") 
             # Check if data is different from the previous data
             if data != self.previous_data:
                 self.previous_data = data  # Update previous data
@@ -81,6 +83,7 @@ class MinimalPublisher(Node):
 
                         msg.pose.position.x = float(parsed[i].get('x')) / 1000
                         msg.pose.position.y = float(parsed[i].get('y')) / 1000
+                        msg.pose.position.z = float(parsed[i].get('z')) / 1000
                         yaw = float(parsed[i].get('yaw'))
                         msg.pose.position.z = yaw
                         msg.pose.orientation = euler_to_quaternion(0, 0, yaw)

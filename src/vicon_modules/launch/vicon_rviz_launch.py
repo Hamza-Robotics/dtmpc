@@ -43,7 +43,7 @@ def generate_launch_description():
     )
 
 
-    pkg_path = os.path.join(get_package_share_directory('vicon_modules'))
+    pkg_path = os.path.join(get_package_share_directory('simulation_numerical'))
     rvizfile=os.path.join(pkg_path,'config','rvizconfig.rviz')
 
     node_rviz2= Node(
@@ -51,7 +51,20 @@ def generate_launch_description():
         executable='rviz2',
         arguments=['-d', rvizfile]
     )
-  
+    
+
+    vicon_bring_up = IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource([os.path.join(
+                        get_package_share_directory('vicon_receiver'),'launch','client.launch.py'
+                    )])
+        )
+   
+    ovicon_state= Node(
+    package='vicon_receiver',
+    executable='robot1.py',
+    output='screen',
+) 
+
     obstacle_node= Node(
     package='simulation_numerical',
     executable='obstacle.py'
@@ -77,14 +90,16 @@ def generate_launch_description():
     executable='publish_state.py')
 
     return LaunchDescription([
+        vicon_bring_up,
+        ovicon_state,
         robot1,
         robot2,
         robot3,
         node_rviz2,
         obstacle_node,
         formation_node,
-        solution_node,
-        trajectory_node,
+        #solution_node,
+        #trajectory_node,
         #show_state_node
 
     ])
