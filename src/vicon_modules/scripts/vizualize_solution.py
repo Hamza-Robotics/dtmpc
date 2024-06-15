@@ -30,7 +30,7 @@ class Vizualize_Solution(Node):
         self.timer_robot2= self.create_timer(0.1, self.timer_callback2)
         self.timer_robot3= self.create_timer(0.1, self.timer_callback3)
         self.timer_pub= self.create_timer(0.1, self.publish_data)
-        self.HOST =  "192.168.0.255" 
+        self.HOST =  "192.168.1.67" 
         self.PORT1 = int(str(1)*5)
         self.PORT2 = int(str(2)*5)
         self.PORT3 = int(str(3)*5)

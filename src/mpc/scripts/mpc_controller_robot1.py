@@ -44,8 +44,8 @@ class Mpc_Controller(Node):
 
   
 
-        self.HOST = "192.168.0.255" 
-        self.PORT = int(robot[5]*5)  
+        self.HOSTS = ["192.168.1.67", "192.168.0.254"]  # Example list of broadcast IP addresses
+        self.PORT = int(robot[5] * 5)
         self.broadcaster = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.broadcaster.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
@@ -256,16 +256,18 @@ class Mpc_Controller(Node):
         pass
 
 
-    def broadcast_solution(self, solution): 
+    def broadcast_solution(self, solution):
         solution_json = json.dumps(solution.tolist())
         solution_bytes = solution_json.encode('utf-8')
-        self.broadcaster.sendto(solution_bytes, (self.HOST, self.PORT))
+        for host in self.HOSTS:
+            self.broadcaster.sendto(solution_bytes, (host, self.PORT))
 
-
-    def broadcast_trajectory(self, solution): 
+    def broadcast_trajectory(self, solution):
         solution_json = json.dumps(solution.tolist())
         solution_bytes = solution_json.encode('utf-8')
-        self.broadcaster_trajectory.sendto(solution_bytes, (self.HOST, self.PORT+1))
+        for host in self.HOSTS:
+            self.broadcaster.sendto(solution_bytes, (host, self.PORT + 1))
+
 
     def state_callback(self,msg):
         if self.motor_time+0.1<time.time():
