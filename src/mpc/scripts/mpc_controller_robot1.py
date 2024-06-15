@@ -12,7 +12,7 @@ import sympy as sp
 import time
 from conversion_functions import path2numpy, quaternion_to_euler, numpy2path, path2numpy
 from geometry_msgs.msg import PoseStamped, Twist, PointStamped
-from dtmpc_interface.msg import Trajectory
+
 import matplotlib.pyplot as plt
 from robot_system import get_trajectory 
 from std_msgs.msg import Float64MultiArray
