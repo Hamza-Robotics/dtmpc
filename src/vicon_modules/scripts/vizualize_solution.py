@@ -35,6 +35,7 @@ class Vizualize_Solution(Node):
         self.PORT2 = int(str(2)*5)
         self.PORT3 = int(str(3)*5)
 
+
         self.solution_robot1=np.zeros((3,1)) 
         self.solution_robot2=np.zeros((3,1))
         self.solution_robot3=np.zeros((3,1))
