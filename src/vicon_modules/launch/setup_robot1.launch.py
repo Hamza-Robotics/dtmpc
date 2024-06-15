@@ -50,21 +50,17 @@ def generate_launch_description():
 
     mpc1=Node(
     package='mpc',
-    executable='mpc_controller_robot1.py',
-               remappings=[
-                ('/robot1/cmd_vel', '/cmd_vel')],
-                 output='screen'
+    executable='mpc_real_robot1.py',
+    output='screen',
 
 ) 
     
     
     return LaunchDescription([
-        vicon_bring_up,
+    
         robot_bring_up,
-        ovicon_state,
-        mpc1,
-        obstacle_node,
 
+        mpc1
     ])
 
 
