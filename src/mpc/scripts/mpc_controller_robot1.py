@@ -213,7 +213,7 @@ class Mpc_Controller(Node):
     def control_loop(self):
         if self.x_received:
             self.get_logger().info('Control loop')
-            self.xr, self.xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
+            self.xr, self.xd = self.trajectory_make(1/self.MPC.frequency,self.MPC.N)  # Assuming trajectory() returns x values
             obs=[[2,6,0.5]]
 
             u,self.x_solution=self.MPC.controller(self.x,self.xr,self.xd,self.obstacles,self.robot1_pos,self.robot2_pos,self.MPC.frequency)

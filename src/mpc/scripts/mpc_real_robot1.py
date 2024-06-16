@@ -23,7 +23,7 @@ class UdpToCmdVel(Node):
         self.last_received_time = time.time()
 
         # Timer to check for zero input publishing
-        self.timer = self.create_timer(0.01, self.check_last_received)
+        self.timer = self.create_timer(0.1, self.check_last_received)
 
     def check_last_received(self):
         current_time = time.time()
@@ -45,7 +45,7 @@ class UdpToCmdVel(Node):
                 twist_msg.angular.z = data_list[1]
                 self.publisher_.publish(twist_msg)
                 self.get_logger().info(f'Published Twist message: {twist_msg}')
-                time.sleep(0.1)
+             
             except (ValueError, IndexError) as e:
                 self.get_logger().error(f'Error parsing UDP message: {e}')
         except BlockingIOError:
