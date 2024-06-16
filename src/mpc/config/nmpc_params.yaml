@@ -1,38 +1,40 @@
 #QP solver to be used in the NLP solver. String in  
-QP_solver: 'PARTIAL_CONDENSING_HPIPM'
+QP_solver: 'FULL_CONDENSING_HPIPM'
 nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
-obstacle:  False  #[BOOL]
-Number_obstacles: 1 #[INT]
-print_acados_status: True #[BOOL]
+Number_obstacles: 3  #[INT]
+Number_Robots: 3 #[INT]
+communication_range: 1.6 #[m]
+print_acados_status: False #[BOOL]
 integrator_type: 'ERK'  #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
-nlp_solver_max_iter: 15 #[INT]
+nlp_solver_max_iter: 4 #[INT]
 cost_type: "LINEAR_LS"
 
 # MPC parameters
-Update_Frequency: 1 #¤[Hz]
+Update_Frequency: 1 #¤[Hz1
 Prediction_Frequency: 10 #[hz]
-Prediction_Length: 5 #[s]
-
+Prediction_Length: 10 #[s]
+Tube: True
 ### Input constraints 
-velocity_max: 3.5 #  [m/s]
-velocity_min: -3.5 # [m/s]
-angle_velocity_max: 60.  # [degrees/s]
-angle_velocity_min: -60. # [degrees/s]
+velocity_max: 0.2 #  [m/s]
+velocity_min: -0.2 # [m/s]
+angle_velocity_max: 40.  # [degrees/s]
+angle_velocity_min: -40. # [degrees/s]
+robot_radius: 0.25 # [m]
 
 ### Error Distance constraints
 ed_min: 0.1 # [m]
-ed_max: 0.14 # [m]
+ed_max: 19.44 # [m]
 
-ed_min_f: -0.1
-ed_max_f: 100.02
+ed_min_f: 0.1
+ed_max_f: 19.02
 ### Error Distance constraints
 
-eo_min: -40.2 # [rad]
-eo_max: 40.2 # [rad]
+eo_min: -100.2 # [rad]
+eo_max: 100.2 # [rad]
 
-eo_min_f: -4.01 # [rad]
-eo_max_f: 40.01 # [rad]
+eo_min_f: -100.01 # [rad]
+eo_max_f: 100.01 # [rad]
 
 
 # Slack variables
@@ -45,10 +47,13 @@ L1_Norm: 1.e+6
 #Q_matrix_waypoint: [1.e-5,1.e-5, 0,0,0]
 #Q_matrix:          [1.e-5, 1.e-5,0,0,0,]
 
-#Q_matrix:          [1.e+4,1.e+4,0, 1.e+1,1.e+1]
-#Q_matrix_e:        [1.e+4,1.e+4,0, 1.e+1,1.e+1]
-Q_matrix:          [1.e+4,1.e+4,0]
-Q_matrix_e:        [1.e+4,1.e+2,0]
+#Q_matrix:            [1.e+4,1.e+4,0,0,0]
+#Q_matrix_0:           [1.e+4,1.e+4,0, 0,0]
+#Q_matrix_i:           [1.e+4,1.e+4,0,0,0]
+#Q_matrix_e:           [1.e+4,1.e+4,0,0,0]
+Q_matrix_0:          [1.e+4,1.e+4,0]
+Q_matrix_i:          [1.e+1,1.e+1,0]
+Q_matrix_e:          [0.e+1,1.e+1,0]
 
 #Q_matrix_waypoint: [0, 0]
-R_matrix:  [1.e-9,1.e-9]
+R_matrix:  [1.e+0,1.e+0]

@@ -98,6 +98,8 @@ def generate_launch_description():
         node_rviz2,
         obstacle_node,
         formation_node,
+
+    show_state_node
         #solution_node,
         #trajectory_node,
         #show_state_node

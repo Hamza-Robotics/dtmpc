@@ -71,7 +71,8 @@ class MinimalPublisher(Node):
             data, addr = self.subscriber_socket.recvfrom(1024)  # Buffer size is 1024 bytes
             #print(f"Received data: {data}") 
             # Check if data is different from the previous data
-            if data != self.previous_data:
+            #if data != self.previous_data:
+            if True:
                 self.previous_data = data  # Update previous data
                 try:
                     parsed = self.parse_xml_data(data.decode())

@@ -18,8 +18,8 @@ class MinimalPublisher(Node):
 
     def listener_callback(self, msg):
         linear_x = msg.linear.x
-        self.get_logger().info('I heard: "%f"' % linear_x)
-        
+        self.get_logger().info('I heard   v=: "%f"' % linear_x)
+        self.get_logger().info('I heard ang=: "%f"' % msg.angular.z)
         # Send the data as an array
         data = [msg.linear.x, msg.angular.z]
         data_bytes = str(data).encode('utf-8')

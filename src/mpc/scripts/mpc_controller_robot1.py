@@ -27,8 +27,8 @@ class Mpc_Controller(Node):
         self.MPC = NMPC(robot)
         self.obstacles = []
         for i in range(self.MPC.numberofobs):
-            self.obstacles.append([209,200,0.2])
-        self.timer = self.create_timer(1/50, self.control_loop)
+            self.obstacles.append([2,2,0.2])
+        self.timer = self.create_timer(1/20, self.control_loop)
         self.subscription_state = self.create_subscription(PoseStamped,robot+'/pose',self.state_callback,10)
         self.subscription_state1 = self.create_subscription(PoseStamped,neighbor_robot1+'/pose',self.state_callback1,10)
         self.subscription_state2 = self.create_subscription(PoseStamped,neighbor_robot2+'/pose',self.state_callback2,10)
@@ -36,9 +36,9 @@ class Mpc_Controller(Node):
   
         self.subscription_solution1= self.create_subscription(Path,'dtmpc/'+neighbor_robot1+'/mpc/solution',self.state_callback_robot1,10)
         self.subscription_solution2= self.create_subscription(Path,'dtmpc/'+neighbor_robot2+'/mpc/solution',self.state_callback_robot2,10)
-        self.publishing_timer = self.create_timer(1., self.datasaver)  # Change 100 to your desired frequency (Hz)    
+        #self.publishing_timer = self.create_timer(1., self.datasaver)  # Change 100 to your desired frequency (Hz)    
 
-  
+
         #self.MPC.N=105
 
     
@@ -211,39 +211,6 @@ class Mpc_Controller(Node):
             return np.asanyarray(traj),np.asanyarray(traj_dot)
     
     def control_loop(self):
-        if False:
-            self.get_logger().info('Control loop')
-            xr, xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
-            obs=[[2,6,0.5]]
-
-            u,self.x_solution=self.MPC.controller(self.x,xr,xd,self.obstacles)
-
-            #u,self.x_solution=self.MPC.controller(self.x,self.traj,self.velocities,obs)
-
-            msg_u=Float64MultiArray()
-            msg_u.data=self.MPC.u_list.flatten().tolist()
-            self.solution_u.publish(msg_u)
-            path_x=numpy2path(self,self.x_solution[:,0:3])
-            self.publisher_solutionx.publish(path_x)
-            #if self.MPC.solver_status==0:
-            if True:
-
-                Twist_msg=Twist()
-                Twist_msg.linear.x=u[0,0]
-                Twist_msg.angular.z=u[0,1]
-                self.publisher_twist.publish(Twist_msg)
-
-    def state_callback1(self,msg):
-        self.pos1 = np.array([msg.pose.position.x, msg.pose.position.y, quaternion_to_euler(msg.pose.orientation)[2]]).reshape(1, 3)
-    
-    def state_callback2(self,msg):
-        self.pos2 = np.array([msg.pose.position.x, msg.pose.position.y, quaternion_to_euler(msg.pose.orientation)[2]]).reshape(1, 3)
-        pass
-        
-    def state_callback(self,msg):
-        rpy=quaternion_to_euler(msg.pose.orientation)
-        self.x=np.array([msg.pose.position.x,msg.pose.position.y,rpy[2]]).reshape(1,3)
-        self.x_received=True
         if self.x_received:
             self.get_logger().info('Control loop')
             self.xr, self.xd = self.trajectory_make(0.1,self.MPC.N)  # Assuming trajectory() returns x values
@@ -266,7 +233,19 @@ class Mpc_Controller(Node):
                 self.u1_send=u[0,0]
                 Twist_msg.angular.z=u[0,1]
                 self.u2_send=u[0,1]
-                self.publisher_twist.publish(Twist_msg)    
+                self.publisher_twist.publish(Twist_msg)  
+
+    def state_callback1(self,msg):
+        self.pos1 = np.array([msg.pose.position.x, msg.pose.position.y, quaternion_to_euler(msg.pose.orientation)[2]]).reshape(1, 3)
+    
+    def state_callback2(self,msg):
+        self.pos2 = np.array([msg.pose.position.x, msg.pose.position.y, quaternion_to_euler(msg.pose.orientation)[2]]).reshape(1, 3)
+        pass
+        
+    def state_callback(self,msg):
+        rpy=quaternion_to_euler(msg.pose.orientation)
+        self.x=np.array([msg.pose.position.x,msg.pose.position.y,rpy[2]]).reshape(1,3)
+        self.x_received=True
 
     def obstacle_extractor(self, msg):
         msg = msg.markers

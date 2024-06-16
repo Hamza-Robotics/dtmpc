@@ -9,16 +9,20 @@ import os
 
 class  NMPC():
 
-    def __init__(self):
+    def __init__(self,robot_name):
         with open('src/mpc/config/nmpc_params.yaml') as file:
             yamlfile = yaml.safe_load(file)
         self.__QP_solver = yamlfile['QP_solver']
         self.frequency=yamlfile['Prediction_Frequency']
         self.__prediction_length = yamlfile['Prediction_Length']
         self.update_frequency=yamlfile['Update_Frequency']
-        self.__robot_model=self.__define_model()
+        self.numberofobs=yamlfile['Number_obstacles']
+        self.__number_of_robots=yamlfile['Number_Robots']-1
+        self._robot_radius=yamlfile['robot_radius']
+        self.robot_name=robot_name
+        self.__robot_model=self.__define_model(robot_name,yamlfile['Number_obstacles']+self.__number_of_robots)
         self.__initialized=False
-
+        self.communication_range=yamlfile['communication_range']
         self.__Tf = self.__prediction_length
         self.__N=int(self.__prediction_length*self.frequency)
         self.N=self.__N 
@@ -27,14 +31,13 @@ class  NMPC():
         self.__model=self.__robot_model # Model
         self.__ocp = AcadosOcp()
         self.__ocp.model = self.__model #Define Model
-
+        self.__tube_on =yamlfile['Tube']
         # Initialize Parameters.
         self.__n_params = self.__model.p.size()[0]
         self.max_v=yamlfile['velocity_max']
         self.min_v=yamlfile['velocity_min']
         self.max_th_d=np.deg2rad(yamlfile['angle_velocity_max'])
         self.min_th_d=np.deg2rad(yamlfile['angle_velocity_min'])
-
 
 
         self.prediction_length=self.__prediction_length
@@ -44,7 +47,8 @@ class  NMPC():
 
         # Vehicle parameters
         self.__nlp_solver_type=yamlfile['nlp_solver_type']
-        self.__Q_matrix=yamlfile['Q_matrix'] 
+        self.__Q_matrix_0=yamlfile['Q_matrix_i'] 
+        self.__Q_matrix_i=yamlfile['Q_matrix_i'] 
         self.__Q_matrix_e=yamlfile['Q_matrix_e']       
         self.__R_matrix=yamlfile['R_matrix']
         self.__print_status=yamlfile['print_acados_status']
@@ -62,28 +66,29 @@ class  NMPC():
         self.__eo_f_min=yamlfile['eo_min_f']
         self.__ed_f_min=yamlfile['ed_min_f']
 
-        self.__obstacle=yamlfile['obstacle']
         self.__numberofobs=yamlfile['Number_obstacles']
 
-
+        self.ed_k1=0
+        self.eo_k1=0
+        self.tubek1=0
         self.__linear_cost_function()
         self.__constraints()
         self.__solver_compiler()
     
-    def __generate_obstacle_params(self):
+    def __generate_obstacle_params(self,number_obs):
         obs=[]
-        for i in range(1):
+        for i in range(number_obs):
             obs_temp=np.array([ca.SX.sym('x'+str(i)+'_obs'),ca.SX.sym('y'+str(i)+'_obs'),ca.SX.sym('r'+str(i)+'_obs')]).reshape(-1,1)            
             obs.append(obs_temp)
         print("hehehehe",obs)
         return ca.vertcat(*obs)
     
-    def __define_model(self):
+    def __define_model(self,robot_name,number_obs):
         model=AcadosModel()
         # control inputs
         v = ca.SX.sym('v')
-        th_d = ca.SX.sym('th_d')
-        controls = ca.vertcat(v, th_d)
+        theta_dot = ca.SX.sym('th_d')
+        controls = ca.vertcat(v, theta_dot)
         # n_controls = controls.size()[0]
         # model stat
     
@@ -91,13 +96,15 @@ class  NMPC():
         # State parameters
         x = ca.SX.sym('x')
         y = ca.SX.sym('y')
-        th = ca.SX.sym('th')
+        theta = ca.SX.sym('th')
+
         # Desired state parameters
         x_d = ca.SX.sym('x_d')
         y_d = ca.SX.sym('y_d')
+        th_0 = ca.SX.sym('th0')
         # Desired velocity parameters
-        xdot_d = ca.SX.sym('xdot_d')
-        ydot_d = ca.SX.sym('ydot_d')
+        xd_dot = ca.SX.sym('xdot_d')
+        yd_dot = ca.SX.sym('ydot_d')
 
 
         # Define error statements. 
@@ -108,43 +115,39 @@ class  NMPC():
         e_o = ca.SX.sym('e_o')
 
         states = ca.vertcat(
-                            e_d,
-                            e_o,
-                            th)
-        obs=self.__generate_obstacle_params()
-        paremeters  = ca.vertcat(x, 
+                            x, 
                             y, 
-                            x_d,
-                            y_d,
-                            xdot_d,
-                            ydot_d,
-                            )   
+                            theta,
+ )      
+        
+        if number_obs>0:
+            obs=self.__generate_obstacle_params(number_obs)
+            paremeters  = ca.vertcat(
+             
+                    obs
+                    )   
+        else:
+            paremeters  = ca.vertcat(
+                    
+                        )   
+  
+       
 
 
-        eps=0
-        #e_d=ca.sqrt(e_x**2+e_y**2)
-        #e_o=e_y()
-        m11 = (e_x*ca.cos(th)+e_y*ca.sin(th))/(e_d+eps)
-        m12 = 0
-        m21 = -((e_y*ca.cos(th)-e_x*ca.sin(th))*(e_x*ca.cos(th)+e_y*ca.sin(th)))/(e_d**2+eps)
-        m22 = -((e_x/(e_d+eps))*ca.cos(th)+(e_y/(e_d+eps))*ca.sin(th))
-        
-        
-        dt=1/self.frequency
-        dt=1
-        e1 = -((e_x*xdot_d*dt+e_y*ydot_d*dt)/(e_d+eps))
-        e2 = (e_o*(xdot_d*dt*e_x+ydot_d*dt*e_y)+e_d*(ca.sin(th)-ca.cos(th)))/(e_d**2+eps)
-        
-        J = ca.vertcat(ca.horzcat(m11,m12),
-                       ca.horzcat(m21,m22))
-        E=ca.vertcat(e1, e2)
-        k=1
-        kin_eq = [ca.vertcat(ca.cos(th)*v,ca.sin(th)*v,th_d)]   
+ 
+        x_dot=ca.cos(theta)*v
+        y_dot=ca.sin(theta)*v
+        #theta_dot=theta_dot
+
+        kin_eq = [ca.vertcat(x_dot,
+                             y_dot,
+                             theta_dot,
+ 
+                             )]   
 
 
         f = ca.Function('f', [states,paremeters, controls], [ca.vcat(kin_eq)], ['state','paremeters', 'control_input'], ['kin_eq'])
-        x_dot = ca.SX.sym('x_dot', len(kin_eq))
-        f_impl = x_dot - f(states,paremeters, controls)
+        f_impl = ca.SX.sym('x_dot', len(kin_eq)) - f(states,paremeters, controls)
 
         model.f_expl_expr = f(states,paremeters, controls)
         model.f_impl_expr = f_impl
@@ -152,7 +155,7 @@ class  NMPC():
         model.xdot = x_dot
         model.u = controls
         model.p=paremeters
-        model.name = 'mobile_robot'
+        model.name = robot_name
         return model
     
     def __linear_cost_function(self):
@@ -165,7 +168,8 @@ class  NMPC():
         self.__ny_e = self.__nx
         ### COST FUNCTION ##
         unscale=self.__N/self.__Tf
-        self.__Q =  np.diag(self.__Q_matrix) # [x,y,x_d,y_d,th,th_d]
+        self.__Q_0 =  np.diag(self.__Q_matrix_0) # [x,y,x_d,y_d,th,th_d]
+        self.__Q_i =  np.diag(self.__Q_matrix_i) # [x,y,x_d,y_d,th,th_d]
         self.__Q_e =  np.diag(self.__Q_matrix_e) # [x,y,x_d,y_d,th,th_d]
 
 
@@ -173,11 +177,11 @@ class  NMPC():
         self.__ocp.cost.cost_type = 'LINEAR_LS'
         self.__ocp.cost.cost_type_e = 'LINEAR_LS'
 
-        self.__ocp.cost.W = scipy.linalg.block_diag(self.__Q, self.__R)
-        self.__ocp.cost.W_0 = scipy.linalg.block_diag(self.__Q, self.__R)
+        self.__ocp.cost.W = scipy.linalg.block_diag(self.__Q_i, self.__R)
+        self.__ocp.cost.W_0 = scipy.linalg.block_diag(self.__Q_0, self.__R)
 
 
-        self.__ocp.cost.W_e=  np.diag(self.__Q_matrix)# [x,y,x_d,y_d,th,th_d]
+        self.__ocp.cost.W_e=  np.diag(self.__Q_matrix_e)# [x,y,x_d,y_d,th,th_d]
         self.__ocp.cost.Vx = np.zeros((self.__ny, self.__nx))
         self.__ocp.cost.Vx[:self.__nx, :self.__nx] = np.eye(self.__nx)
         self.__ocp.cost.Vx_0 = np.zeros((self.__ny, self.__nx))
@@ -199,15 +203,10 @@ class  NMPC():
         self.__ns_e=0
         self.__ns_0=0
         self.__ns_i=0
+        x_alg=self.__model.x[0]
+        y_alg=self.__model.x[1]
+        th0_alg=self.__model.x[2]
 
-        e_d_alg=self.__model.x[0]
-        e_o_alg=self.__model.x[1]
-
-        x_alg  =self.__model.p[0]
-        y_alg  =self.__model.p[1]
-        th_alg =self.__model.p[2]      
-        x_d_alg=self.__model.p[3]
-        y_d_alg=self.__model.p[4]
 
 
         self.__ocp.constraints.lbu = np.array([self.min_v,self.min_th_d])
@@ -219,34 +218,59 @@ class  NMPC():
         self.__ns_i+=2
         self.__ns_0+=2
 
+        self.__avoidance_n=self.numberofobs+self.__number_of_robots
 
-        ex=x_alg-x_d_alg
-        ey=y_alg-y_d_alg
+        con_h=[]    
+        for i in range(0, (self.__numberofobs)*3+0, 3):
+            con_h.append((x_alg - self.__model.p[i+0])**2 + (y_alg - self.__model.p[i+1])**2 - (self.__model.p[i+2] + 0.1)**2)
 
-  
-        if False:
-            con_h=[e_d_alg**2]
-            for i in range(4,self.__numberofobs*3+4,3):
-                #con_h.append((x_alg-self.__model.p[i+0])**2 + (y_alg-self.__model.p[i+1])**2 - (self.__model.p[i+2])**2)
-                pass
-            con_h_vcat=ca.vcat(con_h)
-            self.__ocp.model.con_h_expr =con_h_vcat
-            self.__ocp.constraints.lh =np.array([self.__ed_min**2])
-            self.__ocp.constraints.uh =np.array([self.__ed_max**2])
-            self.__ocp.constraints.lsh = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
-            self.__ocp.constraints.ush = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
-            self.__ocp.constraints.idxsh = np.array(range(len(con_h)))    # Jsh
-            self.__ns_i+=len(con_h)
-            con_h_e=[e_d_alg**2]
-            con_h_vcat=ca.vcat(con_h_e)
-            self.__ocp.model.con_h_expr_e =con_h_vcat
-            self.__ocp.constraints.lh_e =np.array([self.__ed_f_min**2])
-            self.__ocp.constraints.uh_e =np.array([self.__ed_f_max**2])
-            self.__ocp.constraints.lsh_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
-            self.__ocp.constraints.ush_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
-            self.__ocp.constraints.idxsh_e = np.array(range(len(con_h)))    # Jsh
-            self.__ns_e+=len(con_h)
-      
+        robot_pos=[]
+        for i in range((self.__numberofobs)*3+0, (self.__numberofobs)*3+0+self.__number_of_robots*3  , 3):
+            con_h.append((x_alg - self.__model.p[i+0])**2 + (y_alg - self.__model.p[i+1])**2 - (self.__model.p[i+2] + 0.1)**2)
+            robot_pos.append([self.__model.p[i+0],self.__model.p[i+1],self.__model.p[i+2]])
+            
+       
+            xcom=robot_pos[0][0]
+            ycom=robot_pos[0][1]
+        
+        if self.robot_name!="robot1":
+        #if False:
+            self.__com=1
+            self.communication_range
+            con_h.append(ca.sqrt((x_alg-xcom)**2 + (y_alg-ycom)**2+0.001) - ((self.communication_range)))
+            ub_com=0
+            lb_com=-100
+        else:
+            self.__com=0
+            ub_com=0
+            lb_com=0
+        con_h_vcat=ca.vcat(con_h)
+
+
+        self.__ocp.model.con_h_expr_0 =con_h_vcat
+        self.__ocp.constraints.lh_0 =np.array(  [0]*self.__avoidance_n+ [lb_com]*self.__com)
+        self.__ocp.constraints.uh_0 =np.array( [100]*self.__avoidance_n+ [ub_com]*self.__com)
+        self.__ocp.constraints.lsh_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+        self.__ocp.constraints.ush_0 = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+        self.__ocp.constraints.idxsh_0 = np.array(range(len(con_h)))    # Jsh
+        self.__ns_0+=len(con_h)
+        
+        self.__ocp.model.con_h_expr =con_h_vcat
+        self.__ocp.constraints.lh =np.array([0]*self.__avoidance_n+ [lb_com]*self.__com)
+        self.__ocp.constraints.uh  =np.array( [100]*self.__avoidance_n+ [ub_com]*self.__com)
+        self.__ocp.constraints.lsh = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+        self.__ocp.constraints.ush = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+        self.__ocp.constraints.idxsh = np.array(range(len(con_h)))    # Jsh
+        self.__ns_i+=len(con_h)
+
+        self.__ocp.model.con_h_expr_e =con_h_vcat
+        self.__ocp.constraints.lh_e =np.array( [0]*self.__avoidance_n+ [lb_com]*self.__com)
+        self.__ocp.constraints.uh_e =np.array([100]*self.__avoidance_n+ [ub_com]*self.__com)
+        self.__ocp.constraints.lsh_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft lower bounds for nonlinear constraints
+        self.__ocp.constraints.ush_e = np.zeros(len(con_h))             # Lower bounds on slacks corresponding to soft upper bounds for nonlinear constraints
+        self.__ocp.constraints.idxsh_e = np.array(range(len(con_h)))    # Jsh
+        self.__ns_e+=len(con_h)
+    
 
         if False:
 
@@ -436,13 +460,13 @@ class  NMPC():
         self.__ocp.cost.yref = np.concatenate((x_ref, u_ref))
         self.__ocp.cost.yref_e = x_ref
         self.__ocp.solver_options.levenberg_marquardt = 1.0
-        #self.__ocp.solver_options.reg_epsilon='CONVEXIFY'
+        #self.__oc.solver_options.reg_epsilon='CONVEXIFY'
         self.__ocp.solver_options.qp_solver = self.__QP_solver
         self.__ocp.solver_options.nlp_solver_type = self.__nlp_solver_type
         self.__ocp.solver_options.tf = self.__Tf
         self.__ocp.solver_options.integrator_type=self.__integrator_type
         self.__ocp.solver_options.nlp_solver_max_iter=self.__nlp_solver_max_iter
-        self.__ocp.solver_options.qp_solver_warm_start=1
+        self.__ocp.solver_options.qp_solver_warm_start=2
 
         json_file = os.path.join('_acados_ocp.json')
         
@@ -454,26 +478,21 @@ class  NMPC():
             AcadosOcpSolver.build(self.__ocp.code_export_directory, with_cython=True)
             self.__solver = AcadosOcpSolver.create_cython_solver('acados_ocp.json')
     
-    def __e_de_o(self,x,xd,y,yd,th):
-        e_x=x-xd
-        e_y=y-yd
-        e_d=np.sqrt(e_x**2+e_y**2)
-        e_o=(e_y*np.cos(th))/e_d-(e_x*np.sin(th))/e_d
-        return e_d,e_o   
+
+
     
-    def controller(self,x,traj,vel,obs,robots=None):
-        
-        
+    def controller(self,x,traj,vel,obs,robot1,robot2,hz):
         x_current = x[0]
         x=x_current[0] 
         y=x_current[1] 
         th=x_current[2]
+        
         state = np.array([x,y,th])
         #print(state)
         if not self.__initialized:
             self.__initialize(state)
 
-        self.__set_controller_trajectory(x,y,th,traj,vel,obs)
+        self.__set_controller_trajectory(x,y,th,traj,vel,obs,robot1,robot2)
 
         self.__solver.set(0, 'lbx', state)
         self.__solver.set(0, 'ubx', state)
@@ -499,7 +518,11 @@ class  NMPC():
 
 
         for i in range(self.__N):
-
+            if i==0:
+                
+                u1=self.__solver.get(i, 'u')[0]
+                u2=self.__solver.get(i, 'u')[1]
+                u_list.append([u1,u2])
             u_list.append(self.__solver.get(i, 'u'))
             x_list.append(self.__solver.get(i,'x'))
  
@@ -513,13 +536,23 @@ class  NMPC():
         
         
         for i in range(len(self.x_list)):
-            self.__solver.set(i, 'x', x_list[i])
-            self.__solver.set(i, 'u', u_list[i])
+            #self.__solver.set(i, 'x', x_list[i])
+            #self.__solver.set(i, 'u', u_list[i])
 
             pass
         self.__initialized=False 
+
+        #print("state;",np.array([x,y,np.rad2deg(th),e_d,e_o]))
+        #print("control;",np.array([u_list[0][0],np.rad2deg(u_list[0][1])]))
+  
+
+        #u0,u1=self.__tube(u_list[0],x_list[0],traj[0],vel[0],hz)
+  
+
+        #self.u_list[0]=np.array([u0,u1])
         return self.u_list, self.x_list
     
+
     def __initialize(self,state):
         for i in range(self.__N):
             self.__solver.set(i, 'x', state)
@@ -528,23 +561,26 @@ class  NMPC():
         self.__solver.set(self.__N, 'x', state)
         #self.__initialized=True 
 
-    def __set_controller_trajectory(self,x,y,th,traj,vel,obs,robots=None):
-
-        Q=self.__Q
+    def __set_controller_trajectory(self,x,y,th,traj,vel,obs,robot1,robot2):
+        Q_0=self.__Q_0
+        Q_i=self.__Q_i
         Q_e=self.__Q_e
         for i in range(self.__N):
-                
+                if i==0:
+                    self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q_0, self.__R))
+                else:
+                    self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q_i, self.__R))
+                #self.__solver.set(i, 'yref', np.concatenate((np.array([0.1,0.0,traj[i,0],traj[i,1],0]),np.zeros((self.__nu)))))
                 self.__solver.set(i, 'yref', np.concatenate((np.array([traj[i,0],traj[i,1],0]),np.zeros((self.__nu)))))
-
-
-                self.__solver.set(i, 'p', self.__set_params(x,y,th,traj[i],vel[i],obs,robots))
+    
+                self.__solver.set(i, 'p', self.__set_params(obs,robot1[i], robot2[i]))
                 
-                self.__solver.cost_set(i, 'W', scipy.linalg.block_diag(Q, self.__R))
-                #Q = Q - (i / len(traj)) * (Q-self.__Q_e)
+                #Q = Q - (i / len(traj)) * (Q_-self.__Q_e)
           
+
         self.__solver.cost_set(self.__N, 'W', Q_e)
-        self.__solver.set(self.__N, 'p', self.__set_params(x,y,th,traj[self.__N-1],vel[self.__N-1],obs,robots))
-        self.__solver.set(self.__N, 'yref', np.array(np.array([traj[self.__N-1,0],traj[self.__N-1,1],0])))
+        self.__solver.set(self.__N, 'p', self.__set_params(obs,robot1[self.__N-1], robot2[self.__N-1]))
+        self.__solver.set(self.__N, 'yref', np.array([traj[self.__N-1,0],traj[self.__N-1,1],0]))     
         
 
         if False:
@@ -555,17 +591,23 @@ class  NMPC():
                     else:
                         self.__solver.cost_set(index[0], 'W', scipy.linalg.block_diag(Q_matrix_waypoint, self.__R))
 
-    def __set_params(self,x,y,th,traj,vel,obs,robots=None):
-        xd=traj[0]
-        yd=traj[1]
-        xdotd=vel[0]
-        ydotd=vel[1]
+    def __set_params(self,obs,robot1,robot2):
+
         
-   
-        params=np.array([x,y,xd,yd,xdotd,ydotd])
-        for i in range(len(obs)):
-            #params = np.concatenate((params, obs[i]))
+        robot1 = np.array([robot1[0], robot1[1], self._robot_radius])
+        robot2 = np.array([robot2[0], robot2[1], self._robot_radius])
+        params = np.array([])
+        
+        for i in range(self.__numberofobs):
+            
+            params = np.concatenate((params, obs[i]))
             pass
+        if self.__number_of_robots>1:
+            params = np.concatenate((params,robot1))
+            params = np.concatenate((params,robot2))
+            
+        
+                 
         return params
     
     def simulator(self,x,u):
