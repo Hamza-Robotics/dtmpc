@@ -28,7 +28,7 @@ class Mpc_Controller(Node):
         self.obstacles = []
         for i in range(self.MPC.numberofobs):
             self.obstacles.append([2,2,0.2])
-        self.timer = self.create_timer(1/20, self.control_loop)
+        self.timer = self.create_timer(1/10, self.control_loop)
         self.subscription_state = self.create_subscription(PoseStamped,robot+'/pose',self.state_callback,10)
         self.subscription_state1 = self.create_subscription(PoseStamped,neighbor_robot1+'/pose',self.state_callback1,10)
         self.subscription_state2 = self.create_subscription(PoseStamped,neighbor_robot2+'/pose',self.state_callback2,10)

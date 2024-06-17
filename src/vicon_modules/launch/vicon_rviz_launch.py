@@ -59,9 +59,22 @@ def generate_launch_description():
                     )])
         )
    
-    ovicon_state= Node(
+    vicon_state_robot1= Node(
     package='vicon_receiver',
     executable='robot1.py',
+    output='screen',
+) 
+    
+    vicon_state_robot2= Node(
+    package='vicon_receiver',
+    executable='robot2.py',
+    output='screen',
+) 
+    
+
+    vicon_state_robot3= Node(
+    package='vicon_receiver',
+    executable='robot3.py',
     output='screen',
 ) 
 
@@ -91,7 +104,9 @@ def generate_launch_description():
 
     return LaunchDescription([
         vicon_bring_up,
-        ovicon_state,
+        vicon_state_robot1,
+        vicon_state_robot2,
+        vicon_state_robot3,
         robot1,
         robot2,
         robot3,

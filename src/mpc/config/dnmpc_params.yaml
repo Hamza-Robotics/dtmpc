@@ -13,13 +13,13 @@ cost_type: "LINEAR_LS"
 # MPC parameters
 Update_Frequency: 1 #¤[Hz1
 Prediction_Frequency: 10 #[hz]
-Prediction_Length: 4 #[s]
+Prediction_Length: 5 #[s]
 Tube: True
 ### Input constraints 
 velocity_max: 0.2 #  [m/s]
 velocity_min: -0.2 # [m/s]
-angle_velocity_max: 40.  # [degrees/s]
-angle_velocity_min: -40. # [degrees/s]
+angle_velocity_max: 20.  # [degrees/s]
+angle_velocity_min: -20. # [degrees/s]
 robot_radius: 0.25 # [m]
 
 ### Error Distance constraints
