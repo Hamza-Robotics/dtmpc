@@ -143,7 +143,7 @@ class Mpc_Controller(Node):
         return x,y,xd,yd    
 
     def trajectory_make(self,Ts,N):
-        if robot=='robot1':
+        if True:
             path=Path()
             path.header.stamp = self.get_clock().now().to_msg()
             path.header.frame_id = 'map'

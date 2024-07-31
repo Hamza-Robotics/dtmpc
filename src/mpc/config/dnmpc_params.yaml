@@ -4,7 +4,7 @@ nlp_solver_type : 'SQP'
 cython_solver: False #[BOOL]
 Number_obstacles: 3  #[INT]
 Number_Robots: 3 #[INT]
-communication_range: 1.6 #[m]
+communication_range: 5.6 #[m]
 print_acados_status: False #[BOOL]
 integrator_type: 'ERK'  #'ERK', 'IRK', 'GNSF', 'DISCRETE', 'LIFTED_IRK'
 nlp_solver_max_iter: 4 #[INT]
@@ -12,8 +12,8 @@ cost_type: "LINEAR_LS"
 
 # MPC parameters
 Update_Frequency: 1 #¤[Hz1
-Prediction_Frequency: 10 #[hz]
-Prediction_Length: 5 #[s]
+Prediction_Frequency: 7 #[hz]
+Prediction_Length: 6 #[s]
 Tube: True
 ### Input constraints 
 velocity_max: 0.2 #  [m/s]
