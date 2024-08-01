@@ -4,5 +4,7 @@ log/
 .gitignore
 src/mpc/acados
 _acados_ocp.json
+acados_ocp.json
+
 c_generated_code/
 src/ros2-vicon-receiver/

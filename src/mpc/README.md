@@ -26,6 +26,18 @@ pip install -e interfaces/acados_template
 cd ~/dtmpc/
 ```
 
+#### 3.5 Do this step if you use acados on non-standard computer architecture (such as a rasperry pi)
+
+```bash
+sudo apt  install cargo  
+cd ~/dtmpc/src/mpc/acados/
+git clone https://github.com/acados/tera_renderer.git
+cd tera_renderer
+cargo build --verbose --release
+```
+
+
+
 #### 4. set environment variables and run the python simulation:
 
 Very important note. You must source each time you run the simulation. Each time you start up there is no need to build and install the code. Just run these lines and the libary is setup. 
