@@ -20,6 +20,7 @@ cd ~/dtmpc/
 
 #### 3. Install the acados_template interface python libary.
 ```bash
+sudo apt install python3-pip
 cd ~/dtmpc/src/mpc/acados/
 pip install -e interfaces/acados_template
 cd ~/dtmpc/

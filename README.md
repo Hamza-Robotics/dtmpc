@@ -18,8 +18,11 @@
 This is the implementation of the Master thesis titled : Tube-Based NMPC for non-holonomic multi-agent system in unknown enviorments. 
 
 ## Article 
+The NMPC approach has been validated through experiments demonstrating effective trajectory tracking and low orientation errors (Hassan, 2024). For more information, you can access the full master thesis [here](https://kbdk-aub.primo.exlibrisgroup.com/permalink/45KBDK_AUB/a7me0f/alma9921779513605762).
 
-Comming soon. 
+**References**
+ Hassan, Hamza Abdinassir. *Tube-Based NMPC for Non-Holonomic Multi-Agent Systems in Unknown Environments: Prelude to Modern Control*. Aalborg Universitet, 2024.
+
 
 ## Installation
 ```bash
@@ -70,3 +73,4 @@ source setup_acados.sh  && ros2 run mpc mpc_controller_robot2.py
 
 ## Contributing
  
+
