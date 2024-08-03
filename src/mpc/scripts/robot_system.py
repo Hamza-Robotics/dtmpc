@@ -4,15 +4,16 @@
 import sympy as sp
 def get_trajectory(robot):
     t=sp.symbols('t')
-    theta=sp.pi*t/40
+    theta=sp.pi/75
     if robot=='robot1':
 
      
         k=0.5
         l=1
         time_delay=0
-        x=1.4*sp.sin(theta-time_delay)
-        y=1.4*sp.cos(theta-time_delay)
+        
+        x=1.5*sp.sin((theta*(t)))
+        y=1.5*sp.cos((theta*(t)))
         xd=sp.diff(x,t)
         yd=sp.diff(y,t)
         
@@ -24,12 +25,9 @@ def get_trajectory(robot):
 
         return x,y ,xd,yd
     if robot=='robot2':
-        
-        k=0.
-        l=0
-        time_delay=0
-        x=1.8*sp.sin(theta-time_delay)+l*sp.sin(theta-time_delay)
-        y=1.8*sp.cos(theta-time_delay)+l*sp.cos(theta-time_delay)
+
+        x=1.0*sp.sin((theta*(t)))
+        y=1.0*sp.cos((theta*(t)))
         xd=sp.diff(x,t)
         yd=sp.diff(y,t)
         
@@ -44,11 +42,9 @@ def get_trajectory(robot):
     if robot=='robot3':
         
       
-        k=0.2
-        l=0
-        time_delay=0
-        x=2.2*sp.sin(theta-time_delay)+l*sp.sin(theta-time_delay)
-        y=2.2*sp.cos(theta-time_delay)+l*sp.cos(theta-time_delay)
+
+        x=2.0*sp.sin((theta*(t)))
+        y=2.0*sp.cos((theta*(t)))
         xd=sp.diff(x,t)
         yd=sp.diff(y,t)
         

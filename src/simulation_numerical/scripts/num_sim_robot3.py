@@ -56,8 +56,8 @@ class StatePublisher(Node):
         self.angular_z=msg.angular.z
 
     def publisher_loop(self):
-        self.x=self.x+(cos(self.th0)*self.linear_x+0.05*sin((pi/15)*time.time()  ))*1/(self.hz)
-        self.y=self.y+(sin(self.th0)*self.linear_x+0.05*cos((pi/15)*time.time()  ))*1/(self.hz)
+        self.x=self.x+(cos(self.th0)*self.linear_x+0.00*sin((pi/15)*time.time()  ))*1/(self.hz)
+        self.y=self.y+(sin(self.th0)*self.linear_x+0.00*cos((pi/15)*time.time()  ))*1/(self.hz)
         self.th0=self.th0+self.angular_z*1/(self.hz)
         now = self.get_clock().now()
         self.joint_state.header.stamp = now.to_msg()

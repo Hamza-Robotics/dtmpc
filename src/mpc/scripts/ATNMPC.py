@@ -38,6 +38,11 @@ class  NMPC():
         self.min_v=yamlfile['velocity_min']
         self.max_th_d=np.deg2rad(yamlfile['angle_velocity_max'])
         self.min_th_d=np.deg2rad(yamlfile['angle_velocity_min'])
+        if robot_name=="robot12":
+            self.max_v=self.max_v*0.7  
+            self.min_v=self.min_v*0.7
+            self.max_th_d=self.max_th_d*0.7
+            self.min_th_d=self.min_th_d*0.7
 
 
         self.prediction_length=self.__prediction_length

@@ -29,11 +29,16 @@ cd ~/dtmpc/
 #### 3.5 Do this step if you use acados on non-standard computer architecture (such as a rasperry pi)
 
 ```bash
+cd ~/dtmpc/
 sudo apt  install cargo  
 cd ~/dtmpc/src/mpc/acados/
 git clone https://github.com/acados/tera_renderer.git
 cd tera_renderer
 cargo build --verbose --release
+cd target/release/
+cd ~/dtmpc/src/mpc/acados/
+cp tera_renderer/target/release/t_renderer bin/
+cd ~/dtmpc/
 ```
 
 
