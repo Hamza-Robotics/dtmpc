@@ -13,7 +13,7 @@ cost_type: "LINEAR_LS"
 # MPC parameters
 Update_Frequency: 1 #¤[Hz1
 Prediction_Frequency: 7 #[hz]
-Prediction_Length: 6 #[s]
+Prediction_Length: 4 #[s]
 Tube: True
 ### Input constraints 
 velocity_max: 0.2 #  [m/s]
